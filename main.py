@@ -219,7 +219,7 @@ def convert(data):
             return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[special_case_key]}}
         
         if not bool(first_name) and not bool(last_name) and not bool(others):
-            return {"error": "All input fields are empty.\nყველა შეყვანის ნაწილი ცარიელია."}
+            return {"error": "All input fields are empty.\nყველა ველი ცარიელია."}
 
         if not (re.search(r'[\u4e00-\u9fa5]', first_name) or
                 re.search(r'[\u4e00-\u9fa5]', last_name) or
