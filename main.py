@@ -144,9 +144,9 @@ def convert(data):
             "孔子": "კონფუცი",
         }
         if mode == 'pinyin':
-            first_name = data.get('first_name_pinyin', '').strip()
-            last_name = data.get('last_name_pinyin', '').strip()
-            others = data.get('others_pinyin', '').strip()
+            first_name = data.get('first_name_pinyin', '').strip().lower()
+            last_name = data.get('last_name_pinyin', '').strip().lower()
+            others = data.get('others_pinyin', '').strip().lower()
             # If all are empty, error
             if not (first_name or last_name or others):
                 return {'error': 'Please enter at least one pinyin field.'}
@@ -219,7 +219,7 @@ def convert(data):
             return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[special_case_key]}}
         
         if not bool(first_name) and not bool(last_name) and not bool(others):
-            return {"error": "All input fields are empty.\nყველა ველი ცარიელია."}
+            return {"error": "All input fields are empty.\nყველა შეყვანის ნაწილი ცარიელია."}
 
         if not (re.search(r'[\u4e00-\u9fa5]', first_name) or
                 re.search(r'[\u4e00-\u9fa5]', last_name) or
