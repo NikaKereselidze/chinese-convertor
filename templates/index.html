@@ -16,11 +16,11 @@
     />
     <style>
       :root {
-        --primary: #4a90e2;
-        --primary-dark: #357abd;
+        --primary: #48a868;
+        --primary-dark: #3e8c5a;
         --secondary: #1a1a2e;
-        --accent: #5cb85c;
-        --success: #5cb85c;
+        --accent: #52b869;
+        --success: #52b869;
         --warning: #f0ad4e;
         --error: #d9534f;
 
@@ -35,7 +35,7 @@
         --text-muted: #a0a0a0;
 
         --border: rgba(255, 255, 255, 0.12);
-        --border-hover: rgba(74, 144, 226, 0.3);
+        --border-hover: rgba(72, 168, 104, 0.25);
 
         --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
           0 10px 10px -5px rgba(0, 0, 0, 0.1);
@@ -44,21 +44,6 @@
         --blur: blur(20px);
         --radius: 12px;
         --radius-lg: 16px;
-      }
-
-      [data-theme="light"] {
-        --bg-primary: #ffffff;
-        --bg-secondary: #f8f9fa;
-        --bg-tertiary: #e9ecef;
-        --bg-glass: rgba(255, 255, 255, 0.9);
-        --bg-glass-hover: rgba(255, 255, 255, 0.95);
-
-        --text-primary: #000000;
-        --text-secondary: #333333;
-        --text-muted: #666666;
-
-        --border: rgba(0, 0, 0, 0.15);
-        --border-hover: rgba(74, 144, 226, 0.4);
       }
 
       * {
@@ -90,47 +75,34 @@
         height: 100%;
         background: radial-gradient(
             circle at 20% 50%,
-            rgba(74, 144, 226, 0.08) 0%,
+            rgba(72, 168, 104, 0.06) 0%,
             transparent 50%
           ),
           radial-gradient(
             circle at 80% 20%,
-            rgba(92, 184, 92, 0.04) 0%,
+            rgba(82, 184, 105, 0.03) 0%,
             transparent 50%
           ),
           radial-gradient(
             circle at 40% 80%,
-            rgba(74, 144, 226, 0.06) 0%,
+            rgba(72, 168, 104, 0.04) 0%,
             transparent 50%
           );
         pointer-events: none;
         z-index: -1;
+        animation: subtleShift 20s ease-in-out infinite;
       }
 
-      .theme-toggle {
-        position: absolute;
-        top: 24px;
-        right: 24px;
-        width: 48px;
-        height: 48px;
-        background: var(--bg-glass);
-        backdrop-filter: var(--blur);
-        border: 1px solid var(--border);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1000;
-        color: var(--text-primary);
-        font-size: 18px;
-      }
-
-      .theme-toggle:hover {
-        background: var(--bg-glass-hover);
-        border-color: var(--border-hover);
-        transform: scale(1.05);
+      @keyframes subtleShift {
+        0%,
+        100% {
+          transform: translate(0, 0) scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: translate(-5px, -3px) scale(1.02);
+          opacity: 0.95;
+        }
       }
 
       .container {
@@ -170,16 +142,16 @@
         background: linear-gradient(
           90deg,
           transparent,
-          rgba(255, 255, 255, 0.2),
+          rgba(72, 168, 104, 0.15),
           transparent
         );
-        animation: shimmer 3s ease-in-out infinite;
+        animation: gentleGlow 4s ease-in-out infinite;
       }
 
       @keyframes slideUp {
         from {
           opacity: 0;
-          transform: translateY(40px) scale(0.95);
+          transform: translateY(20px) scale(0.98);
         }
         to {
           opacity: 1;
@@ -187,13 +159,13 @@
         }
       }
 
-      @keyframes shimmer {
+      @keyframes gentleGlow {
         0%,
         100% {
-          opacity: 0;
+          opacity: 0.3;
         }
         50% {
-          opacity: 1;
+          opacity: 0.6;
         }
       }
 
@@ -215,6 +187,18 @@
         text-align: center;
         margin-bottom: 40px;
         grid-column: 1 / -1;
+        animation: fadeIn 1s ease-out 0.3s both;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
       }
 
       .title {
@@ -223,8 +207,8 @@
         background: linear-gradient(
           135deg,
           #ffffff 0%,
-          #4a90e2 50%,
-          #5cb85c 100%
+          #48a868 50%,
+          #52b869 100%
         );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -233,15 +217,20 @@
         line-height: 1.2;
       }
 
-      .subtitle {
-        font-size: 1.125rem;
-        color: var(--text-secondary);
-        font-weight: 500;
-        opacity: 1;
-      }
-
       .mode-section {
         margin-bottom: 24px;
+        animation: slideInLeft 0.6s ease-out 0.4s both;
+      }
+
+      @keyframes slideInLeft {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
 
       .mode-toggle {
@@ -264,9 +253,31 @@
         text-transform: uppercase;
         letter-spacing: 0.5px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         border-radius: calc(var(--radius) - 4px);
         font-family: inherit;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .mode-option::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(72, 168, 104, 0.1),
+          transparent
+        );
+        transition: left 0.6s ease;
+      }
+
+      .mode-option:hover::before {
+        left: 100%;
       }
 
       .mode-option.active {
@@ -277,16 +288,19 @@
         );
         color: #ffffff;
         font-weight: 700;
-        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+        box-shadow: 0 2px 8px rgba(72, 168, 104, 0.2);
+        transform: translateY(-1px);
       }
 
       .mode-option:hover:not(.active) {
         color: var(--text-primary);
         background: rgba(255, 255, 255, 0.05);
+        transform: translateY(-1px);
       }
 
       .input-section {
         margin-bottom: 32px;
+        animation: slideInLeft 0.6s ease-out 0.5s both;
       }
 
       .input-label {
@@ -313,7 +327,7 @@
         border: 2px solid var(--border);
         border-radius: var(--radius);
         color: var(--text-primary);
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         outline: none;
         font-family: inherit;
         font-weight: 500;
@@ -328,8 +342,8 @@
 
       .input-field:focus {
         border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15),
-          0 0 15px rgba(74, 144, 226, 0.08);
+        box-shadow: 0 0 0 3px rgba(72, 168, 104, 0.12),
+          0 0 15px rgba(72, 168, 104, 0.06);
         transform: translateY(-2px);
         background: rgba(0, 0, 0, 0.4);
       }
@@ -340,13 +354,13 @@
         top: 20px;
         color: var(--text-secondary);
         font-size: 1.25rem;
-        transition: all 0.3s ease;
+        transition: all 0.4s ease;
         pointer-events: none;
       }
 
       .input-field:focus + .input-icon {
         color: var(--primary);
-        transform: scale(1.1);
+        transform: scale(1.1) rotate(5deg);
       }
 
       .help-text {
@@ -370,18 +384,19 @@
         border: none;
         border-radius: var(--radius);
         cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
         overflow: hidden;
         margin-bottom: 32px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+        box-shadow: 0 4px 12px rgba(72, 168, 104, 0.2);
+        animation: slideInLeft 0.6s ease-out 0.6s both;
       }
 
       .convert-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(74, 144, 226, 0.3);
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(72, 168, 104, 0.25);
       }
 
       .convert-btn:active {
@@ -398,10 +413,10 @@
         background: linear-gradient(
           90deg,
           transparent,
-          rgba(255, 255, 255, 0.2),
+          rgba(255, 255, 255, 0.15),
           transparent
         );
-        transition: left 0.5s ease;
+        transition: left 0.6s ease;
       }
 
       .convert-btn:hover::before {
@@ -416,29 +431,20 @@
 
       .loading.show {
         display: block;
-        animation: fadeIn 0.3s ease;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-        }
-        to {
-          opacity: 1;
-        }
+        animation: fadeIn 0.4s ease;
       }
 
       .spinner {
         width: 40px;
         height: 40px;
         margin: 0 auto 16px;
-        border: 3px solid rgba(74, 144, 226, 0.2);
+        border: 3px solid rgba(72, 168, 104, 0.15);
         border-top: 3px solid var(--primary);
         border-radius: 50%;
-        animation: spin 1s linear infinite;
+        animation: gentleSpin 1.2s linear infinite;
       }
 
-      @keyframes spin {
+      @keyframes gentleSpin {
         0% {
           transform: rotate(0deg);
         }
@@ -460,8 +466,20 @@
         border-radius: var(--radius);
         padding: 32px;
         min-height: 350px;
-        transition: all 0.3s ease;
+        transition: all 0.4s ease;
         height: fit-content;
+        animation: slideInRight 0.6s ease-out 0.5s both;
+      }
+
+      @keyframes slideInRight {
+        from {
+          opacity: 0;
+          transform: translateX(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
       }
 
       .result-header {
@@ -489,6 +507,17 @@
         color: #ffffff;
         font-size: 16px;
         font-weight: 700;
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.05);
+        }
       }
 
       .result-content {
@@ -506,14 +535,14 @@
         margin-bottom: 16px;
         position: relative;
         overflow: hidden;
-        animation: resultSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        transition: all 0.3s ease;
+        animation: resultSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.4s ease;
       }
 
       .result-item:hover {
         transform: translateY(-2px);
         border-color: var(--border-hover);
-        box-shadow: 0 6px 18px rgba(74, 144, 226, 0.12);
+        box-shadow: 0 6px 18px rgba(72, 168, 104, 0.08);
         background: rgba(0, 0, 0, 0.4);
       }
 
@@ -524,11 +553,11 @@
       @keyframes resultSlide {
         from {
           opacity: 0;
-          transform: translateX(-20px);
+          transform: translateY(15px);
         }
         to {
           opacity: 1;
-          transform: translateX(0);
+          transform: translateY(0);
         }
       }
 
@@ -574,6 +603,17 @@
         margin-bottom: 12px;
         opacity: 0.6;
         color: var(--text-secondary);
+        animation: breathe 3s ease-in-out infinite;
+      }
+
+      @keyframes breathe {
+        0%,
+        100% {
+          opacity: 0.6;
+        }
+        50% {
+          opacity: 0.8;
+        }
       }
 
       .error-message {
@@ -666,11 +706,7 @@
       }
     </style>
   </head>
-  <body data-theme="dark">
-    <div class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-      <i class="fas fa-moon" id="theme-icon"></i>
-    </div>
-
+  <body>
     <div class="container">
       <div class="app-card">
         <div class="header">
@@ -745,20 +781,6 @@
 
     <script>
       let currentMode = "chinese";
-
-      function toggleTheme() {
-        const body = document.body;
-        const themeIcon = document.getElementById("theme-icon");
-        const currentTheme = body.getAttribute("data-theme");
-
-        if (currentTheme === "dark") {
-          body.setAttribute("data-theme", "light");
-          themeIcon.className = "fas fa-sun";
-        } else {
-          body.setAttribute("data-theme", "dark");
-          themeIcon.className = "fas fa-moon";
-        }
-      }
 
       function toggleMode(mode) {
         currentMode = mode;
@@ -946,15 +968,6 @@
               </div>
             `;
           });
-      }
-
-      // Initialize theme based on system preference
-      if (
-        window.matchMedia &&
-        window.matchMedia("(prefers-color-scheme: light)").matches
-      ) {
-        document.body.setAttribute("data-theme", "light");
-        document.getElementById("theme-icon").className = "fas fa-sun";
       }
 
       // Initialize the app
