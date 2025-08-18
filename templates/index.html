@@ -3,250 +3,854 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chinese-Georgian Convertor</title>
+    <title>ChineseGeorgian • AI Converter</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
       rel="stylesheet"
     />
     <style>
-      html,
-      body {
-        height: 100%;
+      :root {
+        --primary: #4a90e2;
+        --primary-dark: #357abd;
+        --secondary: #1a1a2e;
+        --accent: #5cb85c;
+        --success: #5cb85c;
+        --warning: #f0ad4e;
+        --error: #d9534f;
+
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #151515;
+        --bg-tertiary: #202020;
+        --bg-glass: rgba(255, 255, 255, 0.05);
+        --bg-glass-hover: rgba(255, 255, 255, 0.08);
+
+        --text-primary: #ffffff;
+        --text-secondary: #d0d0d0;
+        --text-muted: #a0a0a0;
+
+        --border: rgba(255, 255, 255, 0.12);
+        --border-hover: rgba(74, 144, 226, 0.3);
+
+        --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
+          0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+
+        --blur: blur(20px);
+        --radius: 12px;
+        --radius-lg: 16px;
+      }
+
+      [data-theme="light"] {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f8f9fa;
+        --bg-tertiary: #e9ecef;
+        --bg-glass: rgba(255, 255, 255, 0.9);
+        --bg-glass-hover: rgba(255, 255, 255, 0.95);
+
+        --text-primary: #000000;
+        --text-secondary: #333333;
+        --text-muted: #666666;
+
+        --border: rgba(0, 0, 0, 0.15);
+        --border-hover: rgba(74, 144, 226, 0.4);
+      }
+
+      * {
         margin: 0;
         padding: 0;
-        overflow-x: hidden;
+        box-sizing: border-box;
       }
+
       body {
-        background-color: #f8f9fa;
-        padding: 10px;
+        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(
+          135deg,
+          #0a0a0a 0%,
+          #1a1a2e 50%,
+          #0a0a0a 100%
+        );
+        min-height: 100vh;
+        color: var(--text-primary);
+        overflow-x: hidden;
+        position: relative;
+      }
+
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(74, 144, 226, 0.08) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 20%,
+            rgba(92, 184, 92, 0.04) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 40% 80%,
+            rgba(74, 144, 226, 0.06) 0%,
+            transparent 50%
+          );
+        pointer-events: none;
+        z-index: -1;
+      }
+
+      .theme-toggle {
+        position: absolute;
+        top: 24px;
+        right: 24px;
+        width: 48px;
+        height: 48px;
+        background: var(--bg-glass);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        color: var(--text-primary);
+        font-size: 18px;
+      }
+
+      .theme-toggle:hover {
+        background: var(--bg-glass-hover);
+        border-color: var(--border-hover);
+        transform: scale(1.05);
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 40px 24px;
         min-height: 100vh;
         display: flex;
         flex-direction: column;
+        justify-content: center;
+        position: relative;
       }
-      .container {
-        max-width: 100%;
-        background-color: white;
-        padding: 15px;
-        border-radius: 8px;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-        flex: 1;
-        margin-bottom: 10px;
+
+      .app-card {
+        background: var(--bg-glass);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        padding: 48px;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+        animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 48px;
+        align-items: start;
       }
-      .title {
+
+      .app-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        animation: shimmer 3s ease-in-out infinite;
+      }
+
+      @keyframes slideUp {
+        from {
+          opacity: 0;
+          transform: translateY(40px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      @keyframes shimmer {
+        0%,
+        100% {
+          opacity: 0;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      .left-panel {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .right-panel {
+        display: flex;
+        flex-direction: column;
+        position: sticky;
+        top: 20px;
+        min-width: 0;
+      }
+
+      .header {
         text-align: center;
-        margin-bottom: 15px;
-        color: #333;
-        font-size: 1.5rem;
+        margin-bottom: 40px;
+        grid-column: 1 / -1;
       }
-      .form-group {
-        margin-bottom: 15px;
+
+      .title {
+        font-size: clamp(2rem, 5vw, 2.8rem);
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          #ffffff 0%,
+          #4a90e2 50%,
+          #5cb85c 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 16px;
+        line-height: 1.2;
       }
-      .form-group label {
-        font-size: 0.9rem;
-        margin-bottom: 5px;
+
+      .subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        font-weight: 500;
+        opacity: 1;
       }
-      .result-box {
-        background-color: #f8f9fa;
-        padding: 15px;
-        border-radius: 5px;
-        min-height: 150px;
-        margin-top: 15px;
-        overflow-y: auto;
-        max-height: 300px;
+
+      .mode-section {
+        margin-bottom: 24px;
       }
-      .result-box h4 {
-        font-size: 1.1rem;
-        margin-bottom: 10px;
+
+      .mode-toggle {
+        display: flex;
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 4px;
+        margin-bottom: 20px;
       }
+
+      .mode-option {
+        flex: 1;
+        padding: 12px 20px;
+        background: transparent;
+        border: none;
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-radius: calc(var(--radius) - 4px);
+        font-family: inherit;
+      }
+
+      .mode-option.active {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-dark) 100%
+        );
+        color: #ffffff;
+        font-weight: 700;
+        box-shadow: 0 2px 8px rgba(74, 144, 226, 0.3);
+      }
+
+      .mode-option:hover:not(.active) {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.05);
+      }
+
+      .input-section {
+        margin-bottom: 32px;
+      }
+
+      .input-label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .input-wrapper {
+        position: relative;
+        margin-bottom: 16px;
+      }
+
+      .input-field {
+        width: 100%;
+        padding: 20px 24px;
+        font-size: 1.125rem;
+        background: rgba(0, 0, 0, 0.3);
+        backdrop-filter: var(--blur);
+        border: 2px solid var(--border);
+        border-radius: var(--radius);
+        color: var(--text-primary);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        outline: none;
+        font-family: inherit;
+        font-weight: 500;
+        min-height: 80px;
+        resize: vertical;
+      }
+
+      .input-field::placeholder {
+        color: var(--text-muted);
+        font-weight: 400;
+      }
+
+      .input-field:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.15),
+          0 0 15px rgba(74, 144, 226, 0.08);
+        transform: translateY(-2px);
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      .input-icon {
+        position: absolute;
+        right: 20px;
+        top: 20px;
+        color: var(--text-secondary);
+        font-size: 1.25rem;
+        transition: all 0.3s ease;
+        pointer-events: none;
+      }
+
+      .input-field:focus + .input-icon {
+        color: var(--primary);
+        transform: scale(1.1);
+      }
+
+      .help-text {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        font-weight: 500;
+      }
+
+      .convert-btn {
+        width: 100%;
+        padding: 20px;
+        font-size: 1.125rem;
+        font-weight: 700;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-dark) 100%
+        );
+        color: #ffffff;
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 32px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 4px 12px rgba(74, 144, 226, 0.25);
+      }
+
+      .convert-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(74, 144, 226, 0.3);
+      }
+
+      .convert-btn:active {
+        transform: translateY(0);
+      }
+
+      .convert-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s ease;
+      }
+
+      .convert-btn:hover::before {
+        left: 100%;
+      }
+
       .loading {
         display: none;
         text-align: center;
-        margin: 10px 0;
+        margin: 24px 0;
       }
-      .btn {
-        padding: 8px 16px;
-        font-size: 0.9rem;
+
+      .loading.show {
+        display: block;
+        animation: fadeIn 0.3s ease;
       }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        margin: 0 auto 16px;
+        border: 3px solid rgba(74, 144, 226, 0.2);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        font-weight: 600;
+      }
+
+      .result-section {
+        background: rgba(0, 0, 0, 0.2);
+        backdrop-filter: var(--blur);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 32px;
+        min-height: 350px;
+        transition: all 0.3s ease;
+        height: fit-content;
+      }
+
+      .result-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+      }
+
+      .result-icon {
+        width: 32px;
+        height: 32px;
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--accent) 100%
+        );
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #ffffff;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .result-content {
+        min-height: 150px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .result-item {
+        background: rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+        animation: resultSlide 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 0.3s ease;
+      }
+
+      .result-item:hover {
+        transform: translateY(-2px);
+        border-color: var(--border-hover);
+        box-shadow: 0 6px 18px rgba(74, 144, 226, 0.12);
+        background: rgba(0, 0, 0, 0.4);
+      }
+
+      .result-item:last-child {
+        margin-bottom: 0;
+      }
+
+      @keyframes resultSlide {
+        from {
+          opacity: 0;
+          transform: translateX(-20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateX(0);
+        }
+      }
+
+      .result-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+
+      .result-row:last-child {
+        margin-bottom: 0;
+      }
+
+      .result-label {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--primary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .result-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        text-align: right;
+        flex: 1;
+        margin-left: 16px;
+        word-break: break-word;
+      }
+
+      .empty-state {
+        text-align: center;
+        color: var(--text-secondary);
+        font-size: 0.875rem;
+        line-height: 1.6;
+        font-weight: 500;
+      }
+
+      .empty-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+        opacity: 0.6;
+        color: var(--text-secondary);
+      }
+
+      .error-message {
+        color: var(--error);
+        background: rgba(217, 83, 79, 0.1);
+        border: 1px solid rgba(217, 83, 79, 0.3);
+        border-radius: var(--radius);
+        padding: 16px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        font-weight: 500;
+      }
+
       @media (max-width: 768px) {
         .container {
-          padding: 10px;
+          padding: 24px 16px;
         }
+
+        .app-card {
+          padding: 32px 24px;
+          grid-template-columns: 1fr;
+          gap: 32px;
+        }
+
+        .right-panel {
+          position: relative;
+          top: auto;
+        }
+
+        .theme-toggle {
+          top: 16px;
+          right: 16px;
+          width: 48px;
+          height: 48px;
+          font-size: 18px;
+        }
+
         .title {
-          font-size: 1.3rem;
-          margin-bottom: 10px;
+          font-size: 2rem;
         }
-        .form-group {
-          margin-bottom: 10px;
+
+        .input-field {
+          padding: 16px 20px;
+          font-size: 1rem;
+        }
+
+        .convert-btn {
+          padding: 16px;
+          font-size: 1rem;
+        }
+
+        .result-section {
+          padding: 24px;
+          min-height: 200px;
+        }
+
+        .result-item {
+          padding: 20px;
+        }
+
+        .result-row {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 8px;
+        }
+
+        .result-value {
+          text-align: left;
+          margin-left: 0;
+        }
+      }
+
+      /* Accessibility improvements */
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      /* High contrast mode */
+      @media (prefers-contrast: high) {
+        :root {
+          --border: rgba(255, 255, 255, 0.3);
+          --border-hover: rgba(255, 255, 255, 0.5);
         }
       }
     </style>
   </head>
-  <body>
+  <body data-theme="dark">
+    <div class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+      <i class="fas fa-moon" id="theme-icon"></i>
+    </div>
+
     <div class="container">
-      <h1 class="title">ჩინურ-ქართული კონვერტორი</h1>
+      <div class="app-card">
+        <div class="header">
+          <h1 class="title">ჩინურ-ქართული კონვერტორი</h1>
+        </div>
 
-      <div class="form-group">
-        <label for="modeSelect">რეჟიმი / Mode:</label>
-        <select
-          id="modeSelect"
-          class="form-select form-select-sm"
-          onchange="toggleInputMode()"
-        >
-          <option value="chinese">Chinese</option>
-          <option value="pinyin">Pinyin</option>
-        </select>
-      </div>
-
-      <div id="chineseInputs">
-        <div class="row g-2">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="firstName">სახელი / First Name:</label>
-              <input
-                type="text"
-                class="form-control form-control-sm"
-                id="firstName"
-                placeholder='e.g. "建明"'
-              />
+        <div class="left-panel">
+          <div class="mode-section">
+            <div class="mode-toggle">
+              <button class="mode-option" onclick="toggleMode('chinese')">
+                Chinese
+              </button>
+              <button class="mode-option" onclick="toggleMode('pinyin')">
+                Pinyin
+              </button>
             </div>
           </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="lastName">გვარი / Last Name:</label>
+
+          <div class="input-section">
+            <label for="textInput" class="input-label" id="inputLabel"
+              >ტექსტი / Input Text</label
+            >
+            <div class="input-wrapper">
               <input
                 type="text"
-                class="form-control form-control-sm"
-                id="lastName"
-                placeholder='e.g. "李"'
+                class="input-field"
+                id="textInput"
+                placeholder="შეიყვანეთ ჩინური იეროგლიფები (北京) ან ფინინი (beijing)"
+                onkeypress="handleKeyPress(event)"
+                autocomplete="off"
+                spellcheck="false"
               />
+              <i class="fas fa-language input-icon"></i>
             </div>
+            <div class="help-text" id="helpText">
+              <i class="fas fa-info-circle"></i>
+              შეიყვანეთ ჩინური იეროგლიფები ან პინინი.
+            </div>
+          </div>
+
+          <button class="convert-btn" onclick="convert()" id="convertBtn">
+            <i class="fas fa-magic"></i>
+            კონვერტაცია / Convert
+          </button>
+
+          <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text">Processing with AI...</div>
           </div>
         </div>
-        <div class="form-group">
-          <label for="others">სხვა / Others:</label>
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            id="others"
-            placeholder='e.g. "北京"'
-          />
-        </div>
-      </div>
 
-      <div id="pinyinInput" style="display: none">
-        <div class="row g-2">
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="firstNamePinyin">სახელი / First Name:</label>
-              <input
-                type="text"
-                class="form-control form-control-sm"
-                id="firstNamePinyin"
-                placeholder='e.g. "jianming"'
-              />
+        <div class="right-panel">
+          <div class="result-section">
+            <div class="result-header">
+              <div class="result-icon">
+                <i class="fas fa-sparkles"></i>
+              </div>
+              შედეგი / Result
             </div>
-          </div>
-          <div class="col-md-6">
-            <div class="form-group">
-              <label for="lastNamePinyin">გვარი / Last Name:</label>
-              <input
-                type="text"
-                class="form-control form-control-sm"
-                id="lastNamePinyin"
-                placeholder='e.g. "li"'
-              />
+            <div class="result-content" id="resultContent">
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <i class="fas fa-arrow-left"></i>
+                </div>
+                Enter text on the left to see the Georgian translation
+              </div>
             </div>
           </div>
         </div>
-        <div class="form-group">
-          <label for="othersPinyin">სხვა / Others:</label>
-          <input
-            type="text"
-            class="form-control form-control-sm"
-            id="othersPinyin"
-            placeholder='e.g. "beijing"'
-          />
-        </div>
-      </div>
-
-      <button class="btn btn-primary w-100" onclick="convert()">
-        კონვერტაცია
-      </button>
-
-      <div class="loading">
-        <div
-          class="spinner-border spinner-border-sm text-primary"
-          role="status"
-        >
-          <span class="visually-hidden">იტვირთება...</span>
-        </div>
-      </div>
-
-      <div class="result-box" id="result">
-        <h4>შედეგი / Result:</h4>
-        <div id="resultContent" style="font-size: 0.9rem"></div>
-        <div id="pinyinBox" style="margin-top: 10px"></div>
-        <button
-          id="playPinyinBtn"
-          class="btn btn-secondary btn-sm mt-2"
-          style="display: none"
-          onclick="playPinyin()"
-        >
-          🔊 Play Pronunciation
-        </button>
-        <div
-          id="voiceWarning"
-          style="color: #b94a48; font-size: 0.9rem; margin-top: 5px"
-        ></div>
       </div>
     </div>
 
     <script>
-      function toggleInputMode() {
-        const mode = document.getElementById("modeSelect").value;
-        document.getElementById("chineseInputs").style.display =
-          mode === "chinese" ? "" : "none";
-        document.getElementById("pinyinInput").style.display =
-          mode === "pinyin" ? "" : "none";
+      let currentMode = "chinese";
+
+      function toggleTheme() {
+        const body = document.body;
+        const themeIcon = document.getElementById("theme-icon");
+        const currentTheme = body.getAttribute("data-theme");
+
+        if (currentTheme === "dark") {
+          body.setAttribute("data-theme", "light");
+          themeIcon.className = "fas fa-sun";
+        } else {
+          body.setAttribute("data-theme", "dark");
+          themeIcon.className = "fas fa-moon";
+        }
+      }
+
+      function toggleMode(mode) {
+        currentMode = mode;
+        const modeButtons = document.querySelectorAll(".mode-option");
+        const textInput = document.getElementById("textInput");
+        const inputLabel = document.getElementById("inputLabel");
+        const helpText = document.getElementById("helpText");
+
+        // Update button states
+        modeButtons.forEach((btn) => btn.classList.remove("active"));
+        document
+          .querySelector(`[onclick="toggleMode('${mode}')"]`)
+          .classList.add("active");
+
+        // Update placeholders and help text based on mode
+        if (mode === "chinese") {
+          textInput.placeholder =
+            "შეიყვანეთ ჩინური იეროგლიფები (北京, 上海, 王)";
+          inputLabel.textContent = "ჩინური / Chinese Input";
+          helpText.innerHTML =
+            '<i class="fas fa-info-circle"></i> შეიყვანეთ ჩინური იეროგლიფები. მაგ: 北京, 上海, 王';
+        } else {
+          textInput.placeholder = "შეიყვანეთ პინინი (beijing, shanghai, wang)";
+          inputLabel.textContent = "პინინი / Pinyin Input";
+          helpText.innerHTML =
+            '<i class="fas fa-info-circle"></i> შეიყვანეთ პინინი ლათინური ასოებით. მაგ: beijing, zhang wei';
+        }
+
+        // Clear previous results with appropriate arrow direction
+        const isMobile = window.innerWidth <= 768;
+        const arrowIcon = isMobile ? "fa-arrow-up" : "fa-arrow-left";
+        const directionText = isMobile ? "above" : "on the left";
+
+        document.getElementById("resultContent").innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">
+              <i class="fas ${arrowIcon}"></i>
+            </div>
+            Enter ${mode} text ${directionText} to see the Georgian translation
+          </div>
+        `;
+
+        // Focus input
+        textInput.focus();
+      }
+
+      function handleKeyPress(event) {
+        if (event.key === "Enter") {
+          convert();
+        }
       }
 
       function convert() {
-        const mode = document.getElementById("modeSelect").value;
-        let payload = {};
-        if (mode === "chinese") {
-          const firstName = document.getElementById("firstName").value;
-          const lastName = document.getElementById("lastName").value;
-          const others = document.getElementById("others").value;
-          payload = {
-            mode: "chinese",
-            first_name: firstName,
-            last_name: lastName,
-            others: others,
-          };
-        } else {
-          const firstNamePinyin =
-            document.getElementById("firstNamePinyin").value;
-          const lastNamePinyin =
-            document.getElementById("lastNamePinyin").value;
-          const othersPinyin = document.getElementById("othersPinyin").value;
-          payload = {
-            mode: "pinyin",
-            first_name_pinyin: firstNamePinyin,
-            last_name_pinyin: lastNamePinyin,
-            others_pinyin: othersPinyin,
-          };
-        }
+        const text = document.getElementById("textInput").value.trim();
+        const loading = document.getElementById("loading");
+        const resultContent = document.getElementById("resultContent");
+        const convertBtn = document.getElementById("convertBtn");
 
-        document.querySelector(".loading").style.display = "block";
-        var resultContentElem = document.getElementById("resultContent");
-        if (!resultContentElem) {
-          alert("Error: resultContent element not found in HTML.");
+        if (!text) {
+          resultContent.innerHTML = `
+            <div class="error-message">
+              <i class="fas fa-exclamation-triangle"></i>
+              Please enter some text.<br>
+              გთხოვთ შეიყვანოთ ტექსტი.
+            </div>
+          `;
           return;
         }
-        resultContentElem.innerHTML = "";
-        document.getElementById("pinyinBox").innerHTML = "";
-        document.getElementById("playPinyinBtn").style.display = "none";
-        lastPinyin = null;
+
+        // Show loading state
+        loading.classList.add("show");
+        convertBtn.disabled = true;
+        convertBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        resultContent.innerHTML = "";
+
+        // Create payload based on current mode
+        let payload;
+        if (currentMode === "pinyin") {
+          // For pinyin mode, we need to tell the backend it's pinyin
+          // Check if it contains Chinese characters, if not, treat as pinyin
+          const hasChinese = /[\u4e00-\u9fa5]/.test(text);
+          if (hasChinese) {
+            payload = { text: text };
+          } else {
+            // Force pinyin mode by creating a payload that the backend will recognize as pinyin
+            payload = { text: text.toLowerCase() };
+          }
+        } else {
+          // Chinese mode - send as is
+          payload = { text: text };
+        }
 
         fetch("convert", {
           method: "POST",
@@ -256,49 +860,108 @@
           body: JSON.stringify(payload),
         })
           .then((response) => {
-            console.log("Response status:", response.status);
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
           })
           .then((data) => {
-            document.querySelector(".loading").style.display = "none";
+            loading.classList.remove("show");
+            convertBtn.disabled = false;
+            convertBtn.innerHTML =
+              '<i class="fas fa-magic"></i> კონვერტაცია / Convert';
+
             let resultHtml = "";
-            if (typeof data === "string") {
-              resultHtml = `<p>${data}</p>`;
+
+            if (data.error) {
+              resultHtml = `
+                <div class="error-message">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  ${data.error}
+                </div>
+              `;
+            } else if (data.special) {
+              const pinyinDisplay = `/${data.special.pinyin}/`;
+              resultHtml = `
+                <div class="result-item">
+                  <div class="result-row">
+                    <span class="result-label">Pinyin</span>
+                    <span class="result-value">${pinyinDisplay}</span>
+                  </div>
+                  <div class="result-row">
+                    <span class="result-label">ქართული</span>
+                    <span class="result-value">${data.special.ქართული}</span>
+                  </div>
+                </div>
+              `;
             } else {
               for (const [key, value] of Object.entries(data)) {
                 if (
                   value &&
                   typeof value === "object" &&
                   value.pinyin &&
-                  (value.georgian || value["ქართული"])
+                  value.ქართული
                 ) {
-                  resultHtml += `<p><b>pinyin:</b> ${
-                    value.pinyin
-                  }<br><b>ქართული:</b> ${
-                    value.georgian || value["ქართული"]
-                  }</p><br>`;
-                } else if (key === "georgian_from_pinyin" && value) {
-                  resultHtml += `<p><b>ქართული:</b> ${value}</p><br>`;
+                  const pinyinDisplay = `/${value.pinyin}/`;
+                  resultHtml += `
+                    <div class="result-item">
+                      <div class="result-row">
+                        <span class="result-label">Pinyin</span>
+                        <span class="result-value">${pinyinDisplay}</span>
+                      </div>
+                      <div class="result-row">
+                        <span class="result-label">ქართული</span>
+                        <span class="result-value">${value.ქართული}</span>
+                      </div>
+                    </div>
+                  `;
                 }
               }
-              if (data["error"]) {
-                resultHtml += `<p class=\"text-danger\">${data["error"]}</p>`;
-              }
             }
-            resultContentElem.innerHTML = resultHtml;
+
+            if (!resultHtml) {
+              resultHtml = `
+                <div class="empty-state">
+                  <div class="empty-icon">
+                    <i class="fas fa-question-circle"></i>
+                  </div>
+                  No result generated. Please try again.
+                </div>
+              `;
+            }
+
+            resultContent.innerHTML = resultHtml;
           })
           .catch((error) => {
             console.error("Error:", error);
-            document.querySelector(".loading").style.display = "none";
-            resultContentElem.innerHTML = `<p class=\"text-danger\" style=\"font-size: 0.9rem;\">Error: ${error.message}</p>`;
-            document.getElementById("pinyinBox").innerHTML = "";
-            document.getElementById("playPinyinBtn").style.display = "none";
+            loading.classList.remove("show");
+            convertBtn.disabled = false;
+            convertBtn.innerHTML =
+              '<i class="fas fa-magic"></i> კონვერტაცია / Convert';
+
+            resultContent.innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                Connection error: ${error.message}
+              </div>
+            `;
           });
       }
+
+      // Initialize theme based on system preference
+      if (
+        window.matchMedia &&
+        window.matchMedia("(prefers-color-scheme: light)").matches
+      ) {
+        document.body.setAttribute("data-theme", "light");
+        document.getElementById("theme-icon").className = "fas fa-sun";
+      }
+
+      // Initialize the app
+      window.addEventListener("load", () => {
+        toggleMode("chinese"); // Start with Chinese mode
+        document.getElementById("textInput").focus();
+      });
     </script>
   </body>
 </html>
-
