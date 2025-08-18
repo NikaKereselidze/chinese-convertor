@@ -3,7 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ChineseGeorgian • AI Converter</title>
+    <meta name="color-scheme" content="dark" />
+    <title>Chinese-Georgian Converter</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -15,6 +16,11 @@
       rel="stylesheet"
     />
     <style>
+      /* Force dark mode on all devices */
+      html {
+        color-scheme: dark;
+      }
+
       :root {
         --primary: #48a868;
         --primary-dark: #3e8c5a;
@@ -52,6 +58,12 @@
         box-sizing: border-box;
       }
 
+      html,
+      body {
+        background-color: #0a0a0a !important;
+        color: #ffffff !important;
+      }
+
       body {
         font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
         background: linear-gradient(
@@ -59,7 +71,7 @@
           #0a0a0a 0%,
           #1a1a2e 50%,
           #0a0a0a 100%
-        );
+        ) !important;
         min-height: 100vh;
         color: var(--text-primary);
         overflow-x: hidden;
