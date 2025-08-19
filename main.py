@@ -126,7 +126,12 @@ def map_pinyin_to_georgian(pinyin_str):
 
 def convert(data):
     try:
-        mode = data.get('mode', 'chinese')
+        # Get the single input text
+        text = data.get('text', '').strip()
+        
+        if not text:
+            return {'error': 'Please enter some text.\nგთხოვთ შეიყვანოთ ტექსტი.'}
+        
         special_cases = {
             "北京": "პეკინი",
             "南京": "ნანკინი",
@@ -143,150 +148,50 @@ def convert(data):
             "忽必烈": "ყუბილაი",
             "孔子": "კონფუცი",
         }
-        if mode == 'pinyin':
-            first_name = data.get('first_name_pinyin', '').strip().lower()
-            last_name = data.get('last_name_pinyin', '').strip().lower()
-            others = data.get('others_pinyin', '').strip().lower()
-            # If all are empty, error
-            if not (first_name or last_name or others):
-                return {'error': 'Please enter at least one pinyin field.'}
-            # Special case check for combinations
+        
+        # Check if input contains Chinese characters
+        has_chinese = bool(re.search(r'[\u4e00-\u9fa5]', text))
+        
+        if has_chinese:
+            # Handle Chinese input
+            # Check for special cases first
+            if text in special_cases:
+                prof_pinyin = get_professional_pinyin(text)
+                return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[text]}}
+            
+            # Regular Chinese processing
+            text_pinyin = get_pinyin([text])
+            text_georgian = get_georgian(text_pinyin)
+            
+            from collections import OrderedDict
+            result = OrderedDict()
+            text_prof_pinyin = get_professional_pinyin(text)
+            result['ქართული'] = {
+                'pinyin': text_prof_pinyin,
+                'ქართული': ' '.join(text_georgian.values())
+            }
+            return result
+        else:
+            # Handle pinyin input (convert to lowercase for consistency)
+            text = text.lower()
+            
+            # Check special case for pinyin
             def match_special(pinyin):
                 for hanzi, geo in special_cases.items():
                     special_pinyin = get_professional_pinyin(hanzi)
                     if pinyin.replace(' ', '').lower() == special_pinyin.replace(' ', '').lower():
                         return geo
                 return None
+            
             from collections import OrderedDict
             result = OrderedDict()
-            if first_name and last_name:
-                # Check special case for full name combinations
-                full_name_1 = f"{first_name} {last_name}".strip()
-                full_name_2 = f"{last_name} {first_name}".strip()
-                geo1 = match_special(full_name_1)
-                geo2 = match_special(full_name_2)
-                georgian1 = geo1 or map_pinyin_to_georgian(full_name_1)
-                georgian2 = geo2 or map_pinyin_to_georgian(full_name_2)
-                result['სახელი+გვარი'] = {
-                    'pinyin': full_name_1,
-                    'ქართული': georgian1
-                }
-                result['გვარი+სახელი'] = {
-                    'pinyin': full_name_2,
-                    'ქართული': georgian2
-                }
-            elif first_name and not last_name:
-                geo = match_special(first_name)
-                georgian = geo or map_pinyin_to_georgian(first_name)
-                result['სახელი'] = {
-                    'pinyin': first_name,
-                    'ქართული': georgian
-                }
-            elif not first_name and last_name:
-                geo = match_special(last_name)
-                georgian = geo or map_pinyin_to_georgian(last_name)
-                result['გვარი'] = {
-                    'pinyin': last_name,
-                    'ქართული': georgian
-                }
-            elif others:
-                geo = match_special(others)
-                georgian = geo or map_pinyin_to_georgian(others)
-                result['სახელი'] = {
-                    'pinyin': others,
-                    'ქართული': georgian
-                }
+            geo = match_special(text)
+            georgian = geo or map_pinyin_to_georgian(text)
+            result['ქართული'] = {
+                'pinyin': text,
+                'ქართული': georgian
+            }
             return result
-
-        first_name = data.get('first_name', '')
-        last_name = data.get('last_name', '')
-        others = data.get('others', '')
-
-        if others:
-            special_case_key = others
-        else:
-            special_case_key = (first_name, last_name)
-
-        if special_case_key in special_cases:
-            # Determine which field was used for the special case
-            if others:
-                input_text = others
-            elif first_name and last_name:
-                input_text = f"{first_name}{last_name}"
-            else:
-                input_text = first_name or last_name or ''
-            prof_pinyin = get_professional_pinyin(input_text) if input_text else None
-            return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[special_case_key]}}
-        
-        if not bool(first_name) and not bool(last_name) and not bool(others):
-            return {"error": "All input fields are empty.\nყველა შეყვანის ნაწილი ცარიელია."}
-
-        if not (re.search(r'[\u4e00-\u9fa5]', first_name) or
-                re.search(r'[\u4e00-\u9fa5]', last_name) or
-                re.search(r'[\u4e00-\u9fa5]', others)):
-            return {"error": "Please enter Chinese characters.\nგთხოვთ შეიყვანოთ ჩინური იეროგლიფი."}
-
-        first_name_pinyin = get_pinyin(first_name)
-        last_name_pinyin = get_pinyin(last_name)
-        others_pinyin = get_pinyin(others)
-
-        first_name_georgian = get_georgian(first_name_pinyin)
-        last_name_georgian = get_georgian(last_name_pinyin)
-        others_georgian = get_georgian(others_pinyin)
-
-        first_name_key = list(first_name_georgian.keys())
-        last_name_key = list(last_name_georgian.keys())
-        cartesian_product = list(itertools.product(first_name_key, last_name_key))
-
-        merged_dict_1 = {}
-        merged_dict_2 = {}
-        for first_name_key, last_name_key in cartesian_product:
-            key_conbination_1 = f"{first_name_key} {last_name_key}"
-            value_conbination_1 = f"{first_name_georgian[first_name_key]} {last_name_georgian[last_name_key]}"
-            merged_dict_1[key_conbination_1] = value_conbination_1
-
-            key_conbination_2 = f"{last_name_key} {first_name_key}"
-            value_conbination_2 = f"{last_name_georgian[last_name_key]} {first_name_georgian[first_name_key]}"
-            merged_dict_2[key_conbination_2] = value_conbination_2
-
-        # Professional pinyin with tone marks and word segmentation
-        from collections import OrderedDict
-        result = OrderedDict()
-        if bool(first_name) and bool(last_name):
-            full_name_1 = f"{first_name}{last_name}"
-            full_name_2 = f"{last_name}{first_name}"
-            full_name_1_prof_pinyin = get_professional_pinyin(full_name_1) if full_name_1 else ''
-            full_name_2_prof_pinyin = get_professional_pinyin(full_name_2) if full_name_2 else ''
-            result['სახელი+გვარი'] = {
-                'pinyin': full_name_1_prof_pinyin,
-                'ქართული': ' '.join(merged_dict_1.values())
-            }
-            result['გვარი+სახელი'] = {
-                'pinyin': full_name_2_prof_pinyin,
-                'ქართული': ' '.join(merged_dict_2.values())
-            }
-        elif bool(first_name) and not bool(last_name):
-            first_name_prof_pinyin = get_professional_pinyin(first_name) if first_name else ''
-            result['სახელი'] = {
-                'pinyin': first_name_prof_pinyin,
-                'ქართული': ' '.join(first_name_georgian.values())
-            }
-        elif not bool(first_name) and bool(last_name):
-            last_name_prof_pinyin = get_professional_pinyin(last_name) if last_name else ''
-            result['გვარი'] = {
-                'pinyin': last_name_prof_pinyin,
-                'ქართული': ' '.join(last_name_georgian.values())
-            }
-        elif others_georgian:
-            others_prof_pinyin = get_professional_pinyin(others) if others else ''
-            result['სახელი'] = {
-                'pinyin': others_prof_pinyin,
-                'ქართული': ' '.join(others_georgian.values())
-            }
-        else:
-            result = {"error": "No valid input provided"}
-        
-        return result
         
     except Exception as e:
         return {"error": str(e)}
