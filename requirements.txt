@@ -1,7 +1,4 @@
-Flask==2.2.5
-werkzeug==2.3.7
-pypinyin==0.48.0
-pypinyin-dict==0.4.0
+Flask==2.3.3
+pypinyin==0.47.1
+pypinyin-dict==0.7.2
 flask-cors==4.0.0 
-gunicorn
-openai-whisper

@@ -126,12 +126,7 @@
                 <span id="charCount">0</span> / 80
               </div>
               <div class="flex items-center space-x-3">
-                <button
-                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                  title="Voice input"
-                >
-                  <i class="fas fa-microphone text-lg"></i>
-                </button>
+                <!-- Voice input removed for production stability -->
               </div>
             </div>
           </div>
@@ -208,9 +203,6 @@
     <script>
       let isTranslating = false;
       let debounceTimer = null;
-      let mediaRecorder = null;
-      let audioChunks = [];
-      let isRecording = false;
       let currentMode = "chinese";
 
       // Mode switching functionality
@@ -244,7 +236,7 @@
         input.value = "";
         updateCharCount();
         const output = document.getElementById("georgianOutput");
-        output.textContent = "Transliteration will appear here...";
+        output.textContent = "ტრანსლიტერაცია გამოჩნდება აქ...";
         output.className =
           "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
 
@@ -476,7 +468,7 @@
         }
 
         if (!input) {
-          output.textContent = "Transliteration will appear here...";
+          output.textContent = "ტრანსლიტერაცია გამოჩნდება აქ...";
           output.className =
             "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
           copyBtn.disabled = true;
@@ -624,122 +616,6 @@
         }
       }
 
-      // Voice recording functionality
-      async function toggleVoiceRecording() {
-        const micBtn = document.querySelector('[title="Voice input"]');
-        const micIcon = micBtn.querySelector("i");
-
-        if (!isRecording) {
-          // Start recording
-          try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-              audio: {
-                sampleRate: 16000,
-                channelCount: 1,
-                echoCancellation: true,
-                noiseSuppression: true,
-              },
-            });
-
-            mediaRecorder = new MediaRecorder(stream);
-            audioChunks = [];
-
-            mediaRecorder.ondataavailable = (event) => {
-              audioChunks.push(event.data);
-            };
-
-            mediaRecorder.onstop = () => {
-              const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
-              sendAudioToServer(audioBlob);
-
-              // Stop all tracks to release microphone
-              stream.getTracks().forEach((track) => track.stop());
-            };
-
-            mediaRecorder.start();
-            isRecording = true;
-
-            // Update UI
-            micIcon.className = "fas fa-stop text-lg";
-            micBtn.classList.add("bg-red-500", "text-white");
-            micBtn.classList.remove("text-gray-400", "hover:text-gray-600");
-            micBtn.title = "Stop recording";
-
-            console.log("Recording started...");
-          } catch (error) {
-            console.error("Error accessing microphone:", error);
-            alert(
-              "Could not access microphone. Please check permissions and ensure you are using HTTPS."
-            );
-          }
-        } else {
-          // Stop recording
-          if (mediaRecorder && mediaRecorder.state === "recording") {
-            mediaRecorder.stop();
-          }
-
-          isRecording = false;
-
-          // Update UI
-          micIcon.className = "fas fa-microphone text-lg";
-          micBtn.classList.remove("bg-red-500", "text-white");
-          micBtn.classList.add("text-gray-400", "hover:text-gray-600");
-          micBtn.title = "Voice input";
-
-          console.log("Recording stopped...");
-        }
-      }
-
-      async function sendAudioToServer(audioBlob) {
-        const output = document.getElementById("georgianOutput");
-
-        try {
-          // Show processing state
-          output.textContent = "Processing speech...";
-          output.className =
-            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
-
-          const formData = new FormData();
-          formData.append("audio", audioBlob, "recording.wav");
-
-          const response = await fetch("/speech-to-text", {
-            method: "POST",
-            body: formData,
-          });
-
-          const data = await response.json();
-
-          if (!response.ok) {
-            if (response.status === 503) {
-              throw new Error(
-                "Speech-to-text is currently unavailable. Please type manually or try restarting the server."
-              );
-            }
-            throw new Error(
-              data.error || `HTTP error! status: ${response.status}`
-            );
-          }
-
-          if (data.error) {
-            throw new Error(data.error);
-          }
-
-          // Set the transcribed text in the input field
-          const input = document.getElementById("chineseInput");
-          input.value = data.text;
-
-          // Trigger translation
-          handleInput();
-
-          console.log("Transcribed text:", data.text);
-        } catch (error) {
-          console.error("Speech-to-text error:", error);
-          output.textContent = `Speech recognition error: ${error.message}`;
-          output.className =
-            "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
-        }
-      }
-
       // Copy functionality
       document
         .getElementById("copyBtn")
@@ -747,7 +623,7 @@
           const output = document.getElementById("georgianOutput");
           if (
             output.textContent &&
-            !output.textContent.includes("Transliteration will appear here")
+            !output.textContent.includes("Tტრანსლიტერაცია გამოჩნდება აქ")
           ) {
             try {
               // Copy Georgian text directly
@@ -800,7 +676,7 @@
 
           if (
             output.textContent &&
-            !output.textContent.includes("Transliteration will appear here")
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ...")
           ) {
             // Get Georgian text directly
             const georgianText = output.textContent.trim();
@@ -885,12 +761,6 @@
           this.style.height = "auto";
           this.style.height = Math.min(this.scrollHeight, 256) + "px";
         });
-
-      // Add click event to microphone button
-      document.addEventListener("DOMContentLoaded", function () {
-        const micBtn = document.querySelector('[title="Voice input"]');
-        micBtn.addEventListener("click", toggleVoiceRecording);
-      });
     </script>
   </body>
 </html>

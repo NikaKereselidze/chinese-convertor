@@ -5,38 +5,12 @@ import itertools
 from pypinyin_dict.pinyin_data import kxhc1983
 from flask_cors import CORS
 import unicodedata
-import whisper
-import tempfile
-import os
-import ssl
-import urllib.request
 # Load the pinyin data
 kxhc1983.load()
 
 app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": "*"}})
-
-# Load Whisper model once when app starts
-whisper_model = None
-try:
-    print("Loading Whisper model...")
-    
-    # Create an SSL context that doesn't verify certificates (for downloading)
-    ssl_context = ssl.create_default_context()
-    ssl_context.check_hostname = False
-    ssl_context.verify_mode = ssl.CERT_NONE
-    
-    # Set the SSL context for urllib
-    urllib.request.install_opener(urllib.request.build_opener(urllib.request.HTTPSHandler(context=ssl_context)))
-    
-    whisper_model = whisper.load_model("base")
-    print("Whisper model loaded successfully!")
-    
-except Exception as e:
-    print(f"Warning: Could not load Whisper model: {e}")
-    print("Speech-to-text functionality will be disabled, but translation will work fine.")
-    whisper_model = None
 
 # Add security headers
 @app.after_request
@@ -248,61 +222,6 @@ def convert_endpoint():
     except Exception as e:
         app.logger.error(f"Error in convert_endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-@app.route('/speech-to-text', methods=['POST', 'OPTIONS'])
-def speech_to_text():
-    if request.method == 'OPTIONS':
-        return '', 200
-    
-    # Check if Whisper model is available
-    if whisper_model is None:
-        return jsonify({
-            'error': 'Speech-to-text is currently unavailable. Whisper model failed to load.'
-        }), 503
-    
-    try:
-        if 'audio' not in request.files:
-            return jsonify({'error': 'No audio file provided'}), 400
-        
-        audio_file = request.files['audio']
-        
-        if audio_file.filename == '':
-            return jsonify({'error': 'No audio file selected'}), 400
-        
-        # Create temporary file for audio
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.wav') as temp_file:
-            audio_file.save(temp_file.name)
-            
-            try:
-                # Transcribe using Whisper
-                print("Transcribing audio...")
-                result = whisper_model.transcribe(temp_file.name, language="zh")
-                transcribed_text = result['text'].strip()
-                
-                print(f"Transcribed: {transcribed_text}")
-                
-                if not transcribed_text:
-                    return jsonify({'error': 'No speech detected in audio'}), 400
-                
-                return jsonify({
-                    'text': transcribed_text,
-                    'language': result.get('language', 'zh')
-                })
-                
-            except Exception as e:
-                print(f"Whisper transcription error: {str(e)}")
-                return jsonify({'error': f'Transcription failed: {str(e)}'}), 500
-            
-            finally:
-                # Clean up temporary file
-                try:
-                    os.unlink(temp_file.name)
-                except:
-                    pass
-    
-    except Exception as e:
-        app.logger.error(f"Error in speech_to_text: {str(e)}")
-        return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
     try:
