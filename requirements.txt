@@ -4,3 +4,4 @@ pypinyin==0.48.0
 pypinyin-dict==0.4.0
 flask-cors==4.0.0 
 gunicorn
+openai-whisper
