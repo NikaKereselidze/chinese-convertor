@@ -3,880 +3,517 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <title>Chinese-Georgian Converter</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <title>ტრანსლიტერატორი</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "blue-custom": "#4285f4",
+            },
+          },
+        },
+      };
+    </script>
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
       rel="stylesheet"
-    />
-    <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-      rel="stylesheet"
     />
-    <style>
-      /* Force dark mode on all devices */
-      html {
-        color-scheme: dark;
-      }
-
-      :root {
-        --primary: #48a868;
-        --primary-dark: #3e8c5a;
-        --secondary: #1a1a2e;
-        --accent: #52b869;
-        --success: #52b869;
-        --warning: #f0ad4e;
-        --error: #d9534f;
-
-        --bg-primary: #0a0a0a;
-        --bg-secondary: #151515;
-        --bg-tertiary: #202020;
-        --bg-glass: rgba(255, 255, 255, 0.05);
-        --bg-glass-hover: rgba(255, 255, 255, 0.08);
-
-        --text-primary: #ffffff;
-        --text-secondary: #d0d0d0;
-        --text-muted: #a0a0a0;
-
-        --border: rgba(255, 255, 255, 0.12);
-        --border-hover: rgba(72, 168, 104, 0.25);
-
-        --shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
-          0 10px 10px -5px rgba(0, 0, 0, 0.1);
-        --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-
-        --blur: blur(20px);
-        --radius: 12px;
-        --radius-lg: 16px;
-      }
-
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      html,
-      body {
-        background-color: #0a0a0a !important;
-        color: #ffffff !important;
-      }
-
-      body {
-        font-family: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
-        background: linear-gradient(
-          135deg,
-          #0a0a0a 0%,
-          #1a1a2e 50%,
-          #0a0a0a 100%
-        ) !important;
-        min-height: 100vh;
-        color: var(--text-primary);
-        overflow-x: hidden;
-        position: relative;
-      }
-
-      body::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(
-            circle at 20% 50%,
-            rgba(72, 168, 104, 0.06) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 80% 20%,
-            rgba(82, 184, 105, 0.03) 0%,
-            transparent 50%
-          ),
-          radial-gradient(
-            circle at 40% 80%,
-            rgba(72, 168, 104, 0.04) 0%,
-            transparent 50%
-          );
-        pointer-events: none;
-        z-index: -1;
-        animation: subtleShift 20s ease-in-out infinite;
-      }
-
-      @keyframes subtleShift {
-        0%,
-        100% {
-          transform: translate(0, 0) scale(1);
-          opacity: 1;
-        }
-        50% {
-          transform: translate(-5px, -3px) scale(1.02);
-          opacity: 0.95;
-        }
-      }
-
-      .container {
-        max-width: 900px;
-        margin: 0 auto;
-        padding: 40px 24px;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        position: relative;
-      }
-
-      .app-card {
-        background: var(--bg-glass);
-        backdrop-filter: var(--blur);
-        border: 1px solid var(--border);
-        border-radius: var(--radius-lg);
-        padding: 48px;
-        box-shadow: var(--shadow-lg);
-        position: relative;
-        overflow: hidden;
-        animation: slideUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 48px;
-        align-items: start;
-      }
-
-      .app-card::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 1px;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(72, 168, 104, 0.15),
-          transparent
-        );
-        animation: gentleGlow 4s ease-in-out infinite;
-      }
-
-      @keyframes slideUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px) scale(0.98);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0) scale(1);
-        }
-      }
-
-      @keyframes gentleGlow {
-        0%,
-        100% {
-          opacity: 0.3;
-        }
-        50% {
-          opacity: 0.6;
-        }
-      }
-
-      .left-panel {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-      }
-
-      .right-panel {
-        display: flex;
-        flex-direction: column;
-        position: sticky;
-        top: 20px;
-        min-width: 0;
-      }
-
-      .header {
-        text-align: center;
-        margin-bottom: 40px;
-        grid-column: 1 / -1;
-        animation: fadeIn 1s ease-out 0.3s both;
-      }
-
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .title {
-        font-size: clamp(2rem, 5vw, 2.8rem);
-        font-weight: 700;
-        background: linear-gradient(
-          135deg,
-          #ffffff 0%,
-          #48a868 50%,
-          #52b869 100%
-        );
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-        margin-bottom: 16px;
-        line-height: 1.2;
-      }
-
-      .mode-section {
-        margin-bottom: 24px;
-        animation: slideInLeft 0.6s ease-out 0.4s both;
-      }
-
-      @keyframes slideInLeft {
-        from {
-          opacity: 0;
-          transform: translateX(-20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-
-      .mode-toggle {
-        display: flex;
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 4px;
-        margin-bottom: 20px;
-      }
-
-      .mode-option {
-        flex: 1;
-        padding: 12px 20px;
-        background: transparent;
-        border: none;
-        color: var(--text-secondary);
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        border-radius: calc(var(--radius) - 4px);
-        font-family: inherit;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .mode-option::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(72, 168, 104, 0.1),
-          transparent
-        );
-        transition: left 0.6s ease;
-      }
-
-      .mode-option:hover::before {
-        left: 100%;
-      }
-
-      .mode-option.active {
-        background: linear-gradient(
-          135deg,
-          var(--primary) 0%,
-          var(--primary-dark) 100%
-        );
-        color: #ffffff;
-        font-weight: 700;
-        box-shadow: 0 2px 8px rgba(72, 168, 104, 0.2);
-        transform: translateY(-1px);
-      }
-
-      .mode-option:hover:not(.active) {
-        color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.05);
-        transform: translateY(-1px);
-      }
-
-      .input-section {
-        margin-bottom: 32px;
-        animation: slideInLeft 0.6s ease-out 0.5s both;
-      }
-
-      .input-label {
-        display: block;
-        font-size: 0.875rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: 12px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .input-wrapper {
-        position: relative;
-        margin-bottom: 16px;
-      }
-
-      .input-field {
-        width: 100%;
-        padding: 20px 24px;
-        font-size: 1.125rem;
-        background: rgba(0, 0, 0, 0.3);
-        backdrop-filter: var(--blur);
-        border: 2px solid var(--border);
-        border-radius: var(--radius);
-        color: var(--text-primary);
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        outline: none;
-        font-family: inherit;
-        font-weight: 500;
-        min-height: 80px;
-        resize: vertical;
-      }
-
-      .input-field::placeholder {
-        color: var(--text-muted);
-        font-weight: 400;
-      }
-
-      .input-field:focus {
-        border-color: var(--primary);
-        box-shadow: 0 0 0 3px rgba(72, 168, 104, 0.12),
-          0 0 15px rgba(72, 168, 104, 0.06);
-        transform: translateY(-2px);
-        background: rgba(0, 0, 0, 0.4);
-      }
-
-      .input-icon {
-        position: absolute;
-        right: 20px;
-        top: 20px;
-        color: var(--text-secondary);
-        font-size: 1.25rem;
-        transition: all 0.4s ease;
-        pointer-events: none;
-      }
-
-      .input-field:focus + .input-icon {
-        color: var(--primary);
-        transform: scale(1.1) rotate(5deg);
-      }
-
-      .help-text {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        line-height: 1.5;
-        font-weight: 500;
-      }
-
-      .convert-btn {
-        width: 100%;
-        padding: 20px;
-        font-size: 1.125rem;
-        font-weight: 700;
-        background: linear-gradient(
-          135deg,
-          var(--primary) 0%,
-          var(--primary-dark) 100%
-        );
-        color: #ffffff;
-        border: none;
-        border-radius: var(--radius);
-        cursor: pointer;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-        margin-bottom: 32px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        box-shadow: 0 4px 12px rgba(72, 168, 104, 0.2);
-        animation: slideInLeft 0.6s ease-out 0.6s both;
-      }
-
-      .convert-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(72, 168, 104, 0.25);
-      }
-
-      .convert-btn:active {
-        transform: translateY(0);
-      }
-
-      .convert-btn::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent,
-          rgba(255, 255, 255, 0.15),
-          transparent
-        );
-        transition: left 0.6s ease;
-      }
-
-      .convert-btn:hover::before {
-        left: 100%;
-      }
-
-      .loading {
-        display: none;
-        text-align: center;
-        margin: 24px 0;
-      }
-
-      .loading.show {
-        display: block;
-        animation: fadeIn 0.4s ease;
-      }
-
-      .spinner {
-        width: 40px;
-        height: 40px;
-        margin: 0 auto 16px;
-        border: 3px solid rgba(72, 168, 104, 0.15);
-        border-top: 3px solid var(--primary);
-        border-radius: 50%;
-        animation: gentleSpin 1.2s linear infinite;
-      }
-
-      @keyframes gentleSpin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
-      }
-
-      .loading-text {
-        color: var(--text-primary);
-        font-size: 0.875rem;
-        font-weight: 600;
-      }
-
-      .result-section {
-        background: rgba(0, 0, 0, 0.2);
-        backdrop-filter: var(--blur);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 32px;
-        min-height: 350px;
-        transition: all 0.4s ease;
-        height: fit-content;
-        animation: slideInRight 0.6s ease-out 0.5s both;
-      }
-
-      @keyframes slideInRight {
-        from {
-          opacity: 0;
-          transform: translateX(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateX(0);
-        }
-      }
-
-      .result-header {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 24px;
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-      }
-
-      .result-icon {
-        width: 32px;
-        height: 32px;
-        background: linear-gradient(
-          135deg,
-          var(--primary) 0%,
-          var(--accent) 100%
-        );
-        border-radius: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ffffff;
-        font-size: 16px;
-        font-weight: 700;
-        animation: pulse 2s ease-in-out infinite;
-      }
-
-      @keyframes pulse {
-        0%,
-        100% {
-          transform: scale(1);
-        }
-        50% {
-          transform: scale(1.05);
-        }
-      }
-
-      .result-content {
-        min-height: 150px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .result-item {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        padding: 24px;
-        margin-bottom: 16px;
-        position: relative;
-        overflow: hidden;
-        animation: resultSlide 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        transition: all 0.4s ease;
-      }
-
-      .result-item:hover {
-        transform: translateY(-2px);
-        border-color: var(--border-hover);
-        box-shadow: 0 6px 18px rgba(72, 168, 104, 0.08);
-        background: rgba(0, 0, 0, 0.4);
-      }
-
-      .result-item:last-child {
-        margin-bottom: 0;
-      }
-
-      @keyframes resultSlide {
-        from {
-          opacity: 0;
-          transform: translateY(15px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      .result-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-      }
-
-      .result-row:last-child {
-        margin-bottom: 0;
-      }
-
-      .result-label {
-        font-size: 0.875rem;
-        font-weight: 700;
-        color: var(--primary);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      .result-value {
-        font-size: 1.25rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        text-align: right;
-        flex: 1;
-        margin-left: 16px;
-        word-break: break-word;
-      }
-
-      .empty-state {
-        text-align: center;
-        color: var(--text-secondary);
-        font-size: 0.875rem;
-        line-height: 1.6;
-        font-weight: 500;
-      }
-
-      .empty-icon {
-        font-size: 2.5rem;
-        margin-bottom: 12px;
-        opacity: 0.6;
-        color: var(--text-secondary);
-        animation: breathe 3s ease-in-out infinite;
-      }
-
-      @keyframes breathe {
-        0%,
-        100% {
-          opacity: 0.6;
-        }
-        50% {
-          opacity: 0.8;
-        }
-      }
-
-      .error-message {
-        color: var(--error);
-        background: rgba(217, 83, 79, 0.1);
-        border: 1px solid rgba(217, 83, 79, 0.3);
-        border-radius: var(--radius);
-        padding: 16px;
-        font-size: 0.875rem;
-        line-height: 1.5;
-        font-weight: 500;
-      }
-
-      @media (max-width: 768px) {
-        .container {
-          padding: 24px 16px;
-        }
-
-        .app-card {
-          padding: 32px 24px;
-          grid-template-columns: 1fr;
-          gap: 32px;
-        }
-
-        .right-panel {
-          position: relative;
-          top: auto;
-        }
-
-        .theme-toggle {
-          top: 16px;
-          right: 16px;
-          width: 48px;
-          height: 48px;
-          font-size: 18px;
-        }
-
-        .title {
-          font-size: 2rem;
-        }
-
-        .input-field {
-          padding: 16px 20px;
-          font-size: 1rem;
-        }
-
-        .convert-btn {
-          padding: 16px;
-          font-size: 1rem;
-        }
-
-        .result-section {
-          padding: 24px;
-          min-height: 200px;
-        }
-
-        .result-item {
-          padding: 20px;
-        }
-
-        .result-row {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 8px;
-        }
-
-        .result-value {
-          text-align: left;
-          margin-left: 0;
-        }
-      }
-
-      /* Accessibility improvements */
-      @media (prefers-reduced-motion: reduce) {
-        *,
-        *::before,
-        *::after {
-          animation-duration: 0.01ms !important;
-          animation-iteration-count: 1 !important;
-          transition-duration: 0.01ms !important;
-        }
-      }
-
-      /* High contrast mode */
-      @media (prefers-contrast: high) {
-        :root {
-          --border: rgba(255, 255, 255, 0.3);
-          --border-hover: rgba(255, 255, 255, 0.5);
-        }
-      }
-    </style>
   </head>
-  <body>
-    <div class="container">
-      <div class="app-card">
-        <div class="header">
-          <h1 class="title">ჩინურ-ქართული კონვერტორი</h1>
-        </div>
-
-        <div class="left-panel">
-          <div class="mode-section">
-            <div class="mode-toggle">
-              <button class="mode-option" onclick="toggleMode('chinese')">
-                Chinese
-              </button>
-              <button class="mode-option" onclick="toggleMode('pinyin')">
-                Pinyin
-              </button>
-            </div>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-custom text-white px-6 py-4">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white bg-opacity-20 p-2 rounded">
+            <i class="fas fa-language text-xl"></i>
           </div>
+          <h1 class="text-xl font-medium">ტრანსლიტერატორი</h1>
+        </div>
+        <button
+          class="flex items-center space-x-2 bg-white bg-opacity-10 hover:bg-opacity-20 px-3 py-2 rounded transition-colors"
+          onclick="openHistoryModal()"
+        >
+          <i class="fas fa-history"></i>
+          <span>ისტორია</span>
+        </button>
+      </div>
+    </header>
 
-          <div class="input-section">
-            <label for="textInput" class="input-label" id="inputLabel"
-              >ტექსტი / Input Text</label
+    <!-- History Modal -->
+    <div
+      id="historyModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div
+          class="flex items-center justify-between p-4 border-b border-gray-200"
+        >
+          <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-history mr-2 text-blue-custom"></i>
+            ტრანსლიტერაციის ისტორია
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              onclick="clearHistory()"
+              class="text-red-500 hover:text-red-700 px-3 py-1 rounded text-sm font-medium transition-colors"
             >
-            <div class="input-wrapper">
-              <input
-                type="text"
-                class="input-field"
-                id="textInput"
-                placeholder="შეიყვანეთ ჩინური იეროგლიფები (北京) ან ფინინი (beijing)"
-                onkeypress="handleKeyPress(event)"
-                autocomplete="off"
-                spellcheck="false"
-              />
-              <i class="fas fa-language input-icon"></i>
-            </div>
-            <div class="help-text" id="helpText">
-              <i class="fas fa-info-circle"></i>
-              შეიყვანეთ ჩინური იეროგლიფები ან პინინი.
-            </div>
-          </div>
-
-          <button class="convert-btn" onclick="convert()" id="convertBtn">
-            <i class="fas fa-magic"></i>
-            კონვერტაცია / Convert
-          </button>
-
-          <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div class="loading-text">მუშავდება...</div>
+              <i class="fas fa-trash mr-1"></i>
+              გასუფთავება
+            </button>
+            <button
+              onclick="closeHistoryModal()"
+              class="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
           </div>
         </div>
 
-        <div class="right-panel">
-          <div class="result-section">
-            <div class="result-header">
-              <div class="result-icon">
-                <i class="fas fa-sparkles"></i>
-              </div>
-              შედეგი / Result
-            </div>
-            <div class="result-content" id="resultContent">
-              <div class="empty-state">
-                <div class="empty-icon">
-                  <i class="fas fa-arrow-left"></i>
-                </div>
-                Enter text on the left to see the Georgian translation
-              </div>
-            </div>
+        <!-- Modal Content -->
+        <div class="overflow-y-auto max-h-80">
+          <div id="historyContent" class="p-4">
+            <!-- History items will be inserted here -->
           </div>
         </div>
       </div>
     </div>
 
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chinese Input Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-gray-700">ჩინური</span>
+            </div>
+          </div>
+          <!-- Input Area -->
+          <div class="relative">
+            <textarea
+              id="chineseInput"
+              class="w-full h-64 p-4 text-lg resize-none border-none outline-none placeholder-gray-400"
+              placeholder="ჩაწერეთ ჩინური ტექსტი..."
+              maxlength="80"
+              oninput="handleInput()"
+              onkeyup="updateCharCount()"
+            ></textarea>
+
+            <!-- Pinyin Tag Display -->
+            <div
+              id="pinyinTag"
+              class="hidden absolute bottom-16 left-4 right-4"
+            >
+              <div
+                class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full border border-blue-200 inline-block"
+              >
+                <span class="text-xs font-semibold mr-1">Pinyin:</span>
+                <span class="font-mono" id="pinyinText"></span>
+              </div>
+            </div>
+
+            <!-- Bottom Controls -->
+            <div
+              class="flex items-center justify-between p-4 border-t border-gray-100"
+            >
+              <div class="text-sm text-gray-500">
+                <span id="charCount">0</span> / 80
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title="Voice input"
+                >
+                  <i class="fas fa-microphone text-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Georgian Output Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-gray-700">ქართული</span>
+            </div>
+          </div>
+
+          <!-- Output Area -->
+          <div class="relative">
+            <div
+              id="georgianOutput"
+              class="w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto"
+            >
+              ტრანსლიტერაცია გამოჩნდება აქ...
+            </div>
+
+            <!-- Bottom Controls -->
+            <div
+              class="flex items-center justify-between p-4 border-t border-gray-100"
+            >
+              <div class="text-sm text-gray-500">
+                <!-- Empty space for alignment -->
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  id="copyBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Copy"
+                  disabled
+                >
+                  <i class="fas fa-copy text-lg"></i>
+                </button>
+                <button
+                  id="shareBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Share"
+                  disabled
+                >
+                  <i class="fas fa-share text-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Credits -->
+      <footer class="text-center text-sm text-gray-500 mt-8">
+        შექმნილია <span class="text-red-500">❤</span> სსიპ სახელმწიფო ენის
+        დეპარტამენტის © მიერ 2025
+        <div class="mt-2 space-x-4">
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონფიდენციალურობა</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >წესები</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონტაქტი</a
+          >
+        </div>
+      </footer>
+    </main>
+
     <script>
+      let isTranslating = false;
+      let debounceTimer = null;
+      let mediaRecorder = null;
+      let audioChunks = [];
+      let isRecording = false;
       let currentMode = "chinese";
 
-      function toggleMode(mode) {
+      // Mode switching functionality
+      function setMode(mode) {
         currentMode = mode;
-        const modeButtons = document.querySelectorAll(".mode-option");
-        const textInput = document.getElementById("textInput");
-        const inputLabel = document.getElementById("inputLabel");
-        const helpText = document.getElementById("helpText");
+        const input = document.getElementById("chineseInput");
+        const chineseBtn = document.getElementById("chineseMode");
+        const pinyinBtn = document.getElementById("pinyinMode");
 
-        // Update button states
-        modeButtons.forEach((btn) => btn.classList.remove("active"));
-        document
-          .querySelector(`[onclick="toggleMode('${mode}')"]`)
-          .classList.add("active");
-
-        // Update placeholders and help text based on mode
         if (mode === "chinese") {
-          textInput.placeholder =
-            "შეიყვანეთ ჩინური იეროგლიფები (北京, 上海, 王)";
-          inputLabel.textContent = "ჩინური / Chinese Input";
-          helpText.innerHTML =
-            '<i class="fas fa-info-circle"></i> შეიყვანეთ ჩინური იეროგლიფები. მაგ: 北京, 上海, 王';
+          // Update buttons
+          chineseBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors bg-blue-custom text-white";
+          pinyinBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-800";
+
+          // Update placeholder
+          input.placeholder = "Type or paste Chinese text...";
         } else {
-          textInput.placeholder = "შეიყვანეთ პინინი (beijing, shanghai, wang)";
-          inputLabel.textContent = "პინინი / Pinyin Input";
-          helpText.innerHTML =
-            '<i class="fas fa-info-circle"></i> შეიყვანეთ პინინი ლათინური ასოებით. მაგ: beijing, zhang wei';
+          // Update buttons
+          pinyinBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors bg-blue-custom text-white";
+          chineseBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-800";
+
+          // Update placeholder
+          input.placeholder = "Type pinyin (e.g., beijing, shanghai)...";
         }
 
-        // Clear previous results with appropriate arrow direction
-        const isMobile = window.innerWidth <= 768;
-        const arrowIcon = isMobile ? "fa-arrow-up" : "fa-arrow-left";
-        const directionText = isMobile ? "above" : "on the left";
+        // Clear current input and output
+        input.value = "";
+        updateCharCount();
+        const output = document.getElementById("georgianOutput");
+        output.textContent = "Transliteration will appear here...";
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
 
-        document.getElementById("resultContent").innerHTML = `
-          <div class="empty-state">
-            <div class="empty-icon">
-              <i class="fas ${arrowIcon}"></i>
-            </div>
-            Enter ${mode} text ${directionText} to see the Georgian translation
-          </div>
-        `;
+        // Hide pinyin tag when switching modes
+        document.getElementById("pinyinTag").classList.add("hidden");
 
-        // Focus input
-        textInput.focus();
+        // Disable buttons
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        copyBtn.disabled = true;
+        shareBtn.disabled = true;
+        copyBtn.classList.add("opacity-50");
+        shareBtn.classList.add("opacity-50");
       }
 
-      function handleKeyPress(event) {
-        if (event.key === "Enter") {
-          convert();
+      // History management
+      function saveToHistory(chineseText, georgianText, pinyinText) {
+        const historyItem = {
+          id: Date.now(),
+          chinese: chineseText,
+          georgian: georgianText,
+          pinyin: pinyinText,
+          timestamp: new Date().toISOString(),
+        };
+
+        let history = getHistory();
+
+        // Check if this exact translation already exists
+        const existingIndex = history.findIndex(
+          (item) =>
+            item.chinese === chineseText && item.georgian === georgianText
+        );
+
+        if (existingIndex !== -1) {
+          // Remove existing and add to top
+          history.splice(existingIndex, 1);
+        }
+
+        // Add to beginning of array
+        history.unshift(historyItem);
+
+        // Keep only last 50 translations
+        if (history.length > 50) {
+          history = history.slice(0, 50);
+        }
+
+        localStorage.setItem("translationHistory", JSON.stringify(history));
+      }
+
+      function getHistory() {
+        try {
+          const stored = localStorage.getItem("translationHistory");
+          return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+          console.error("Error reading history:", error);
+          return [];
         }
       }
 
-      function convert() {
-        const text = document.getElementById("textInput").value.trim();
-        const loading = document.getElementById("loading");
-        const resultContent = document.getElementById("resultContent");
-        const convertBtn = document.getElementById("convertBtn");
+      function clearHistory() {
+        if (
+          confirm("Are you sure you want to clear all translation history?")
+        ) {
+          localStorage.removeItem("translationHistory");
+          renderHistory();
+        }
+      }
 
-        console.log("Input text:", text); // Debug log
+      function openHistoryModal() {
+        document.getElementById("historyModal").classList.remove("hidden");
+        renderHistory();
+        document.body.style.overflow = "hidden"; // Prevent background scrolling
+      }
 
-        if (!text) {
-          resultContent.innerHTML = `
-            <div class="error-message">
-              <i class="fas fa-exclamation-triangle"></i>
-              Please enter some text.<br>
-              გთხოვთ შეიყვანოთ ტექსტი.
+      function closeHistoryModal() {
+        document.getElementById("historyModal").classList.add("hidden");
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+      }
+
+      function renderHistory() {
+        const historyContent = document.getElementById("historyContent");
+        const history = getHistory();
+
+        if (history.length === 0) {
+          historyContent.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+              <i class="fas fa-history text-4xl mb-4 opacity-50"></i>
+              <p class="text-lg">No translation history yet</p>
+              <p class="text-sm">Start translating to build your history</p>
             </div>
           `;
           return;
         }
 
-        // Show loading state
-        loading.classList.add("show");
-        convertBtn.disabled = true;
-        convertBtn.innerHTML =
-          '<i class="fas fa-spinner fa-spin"></i> Processing...';
-        resultContent.innerHTML = "";
+        const historyHTML = history
+          .map((item) => {
+            const date = new Date(item.timestamp);
+            const timeAgo = getTimeAgo(date);
 
-        // Always send the text as-is, backend will handle detection
+            return `
+            <div class="border border-gray-200 rounded-lg p-4 mb-3 hover:bg-gray-50 transition-colors cursor-pointer" onclick="useHistoryItem('${item.chinese.replace(
+              /'/g,
+              "\\'"
+            )}', '${item.georgian.replace(/'/g, "\\'")}', '${(
+              item.pinyin || ""
+            ).replace(/'/g, "\\'")}')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs text-gray-500">${timeAgo}</span>
+                <button onclick="event.stopPropagation(); deleteHistoryItem(${
+                  item.id
+                })" class="text-red-400 hover:text-red-600 p-1">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ჩინური:</span>
+                  <p class="text-gray-800 font-medium">${item.chinese}</p>
+                </div>
+                ${
+                  item.pinyin
+                    ? `
+                  <div>
+                    <span class="text-xs font-medium text-blue-600 uppercase tracking-wide">ფინინი:</span>
+                    <p class="text-blue-700 font-mono">/${item.pinyin}/</p>
+                  </div>
+                `
+                    : ""
+                }
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ქართული:</span>
+                  <p class="text-gray-700">${item.georgian}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+
+        historyContent.innerHTML = historyHTML;
+      }
+
+      function deleteHistoryItem(id) {
+        let history = getHistory();
+        history = history.filter((item) => item.id !== id);
+        localStorage.setItem("translationHistory", JSON.stringify(history));
+        renderHistory();
+      }
+
+      function useHistoryItem(chineseText, georgianText, pinyinText) {
+        // Fill the input with the selected translation
+        document.getElementById("chineseInput").value = chineseText;
+
+        // Update the output with only Georgian
+        const output = document.getElementById("georgianOutput");
+        output.textContent = georgianText;
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+        // Show pinyin tag if in Chinese mode and pinyin exists
+        if (currentMode === "chinese" && pinyinText) {
+          updatePinyinTag(pinyinText);
+        } else {
+          document.getElementById("pinyinTag").classList.add("hidden");
+        }
+
+        // Enable buttons
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        copyBtn.disabled = false;
+        shareBtn.disabled = false;
+        copyBtn.classList.remove("opacity-50");
+        shareBtn.classList.remove("opacity-50");
+
+        // Update character count
+        updateCharCount();
+
+        // Close modal
+        closeHistoryModal();
+      }
+
+      function getTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return "Just now";
+        if (diffInSeconds < 3600)
+          return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400)
+          return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000)
+          return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+        return date.toLocaleDateString();
+      }
+
+      // Close modal when clicking outside
+      document.addEventListener("click", function (event) {
+        const modal = document.getElementById("historyModal");
+        if (event.target === modal) {
+          closeHistoryModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeHistoryModal();
+        }
+      });
+
+      function updateCharCount() {
+        const input = document.getElementById("chineseInput");
+        const charCount = document.getElementById("charCount");
+        charCount.textContent = input.value.length;
+      }
+
+      function handleInput() {
+        updateCharCount();
+
+        const input = document.getElementById("chineseInput").value.trim();
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+
+        // Clear any existing timer
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        if (!input) {
+          output.textContent = "Transliteration will appear here...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          return;
+        }
+
+        // Show "typing..." immediately for visual feedback
+        if (!isTranslating) {
+          output.textContent = "Typing...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+        }
+
+        // Set a new timer to translate after user stops typing
+        debounceTimer = setTimeout(() => {
+          if (!isTranslating) {
+            convertText(input);
+          }
+        }, 800); // Wait 800ms after user stops typing
+      }
+
+      function convertText(text) {
+        if (isTranslating) return;
+
+        isTranslating = true;
+        const output = document.getElementById("georgianOutput");
+
+        output.textContent = "Translating...";
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+
         const payload = { text: text };
 
-        console.log("Sending payload:", payload); // Debug log
-
-        fetch("convert", {
+        fetch("/convert", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -884,100 +521,375 @@
           body: JSON.stringify(payload),
         })
           .then((response) => {
-            console.log("Response status:", response.status); // Debug log
             if (!response.ok) {
               throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
           })
           .then((data) => {
-            console.log("Received data:", data); // Debug log
-            loading.classList.remove("show");
-            convertBtn.disabled = false;
-            convertBtn.innerHTML =
-              '<i class="fas fa-magic"></i> კონვერტაცია / Convert';
-
-            let resultHtml = "";
-
-            if (data.error) {
-              resultHtml = `
-                <div class="error-message">
-                  <i class="fas fa-exclamation-triangle"></i>
-                  ${data.error}
-                </div>
-              `;
-            } else if (data.special) {
-              const pinyinDisplay = `/${data.special.pinyin}/`;
-              resultHtml = `
-                <div class="result-item">
-                  <div class="result-row">
-                    <span class="result-label">Pinyin</span>
-                    <span class="result-value">${pinyinDisplay}</span>
-                  </div>
-                  <div class="result-row">
-                    <span class="result-label">ქართული</span>
-                    <span class="result-value">${data.special.ქართული}</span>
-                  </div>
-                </div>
-              `;
-            } else {
-              for (const [key, value] of Object.entries(data)) {
-                if (
-                  value &&
-                  typeof value === "object" &&
-                  value.pinyin &&
-                  value.ქართული
-                ) {
-                  const pinyinDisplay = `/${value.pinyin}/`;
-                  resultHtml += `
-                    <div class="result-item">
-                      <div class="result-row">
-                        <span class="result-label">Pinyin</span>
-                        <span class="result-value">${pinyinDisplay}</span>
-                      </div>
-                      <div class="result-row">
-                        <span class="result-label">ქართული</span>
-                        <span class="result-value">${value.ქართული}</span>
-                      </div>
-                    </div>
-                  `;
-                }
-              }
-            }
-
-            if (!resultHtml) {
-              resultHtml = `
-                <div class="empty-state">
-                  <div class="empty-icon">
-                    <i class="fas fa-question-circle"></i>
-                  </div>
-                  No result generated. Please try again.
-                </div>
-              `;
-            }
-
-            resultContent.innerHTML = resultHtml;
+            displayResult(data);
           })
           .catch((error) => {
             console.error("Error:", error);
-            loading.classList.remove("show");
-            convertBtn.disabled = false;
-            convertBtn.innerHTML =
-              '<i class="fas fa-magic"></i> კონვერტაცია / Convert';
-
-            resultContent.innerHTML = `
-              <div class="error-message">
-                <i class="fas fa-exclamation-triangle"></i>
-                Connection error: ${error.message}
-              </div>
-            `;
+            const output = document.getElementById("georgianOutput");
+            output.textContent = "Translation error. Please try again.";
+            output.className =
+              "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          })
+          .finally(() => {
+            isTranslating = false;
           });
       }
 
-      // Initialize the app
-      window.addEventListener("load", () => {
-        toggleMode("chinese"); // Start with Chinese mode
-        document.getElementById("textInput").focus();
+      function displayResult(data) {
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        const input = document.getElementById("chineseInput");
+
+        if (data.error) {
+          output.textContent = data.error;
+          output.className =
+            "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          // Hide pinyin tag on error
+          document.getElementById("pinyinTag").classList.add("hidden");
+          return;
+        }
+
+        let georgianResult = "";
+        let pinyinResult = "";
+
+        if (data.special) {
+          georgianResult = data.special.ქართული;
+          pinyinResult = data.special.pinyin;
+        } else {
+          for (const [key, value] of Object.entries(data)) {
+            if (value && typeof value === "object" && value.ქართული) {
+              georgianResult = value.ქართული;
+              pinyinResult = value.pinyin;
+              break;
+            }
+          }
+        }
+
+        if (georgianResult) {
+          // Show only Georgian in the output area
+          output.textContent = georgianResult;
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+          // Show pinyin as a tag below the input (only in Chinese mode)
+          if (currentMode === "chinese" && pinyinResult) {
+            updatePinyinTag(pinyinResult);
+          } else {
+            document.getElementById("pinyinTag").classList.add("hidden");
+          }
+
+          copyBtn.disabled = false;
+          shareBtn.disabled = false;
+          copyBtn.classList.remove("opacity-50");
+          shareBtn.classList.remove("opacity-50");
+
+          // Save to history
+          const chineseText = input.value.trim();
+          if (chineseText && georgianResult) {
+            saveToHistory(chineseText, georgianResult, pinyinResult);
+          }
+        } else {
+          output.textContent = "No translation available.";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          // Hide pinyin tag when no result
+          document.getElementById("pinyinTag").classList.add("hidden");
+        }
+      }
+
+      function updatePinyinTag(pinyinText) {
+        const pinyinTag = document.getElementById("pinyinTag");
+        const pinyinTextElement = document.getElementById("pinyinText");
+
+        if (pinyinText) {
+          pinyinTextElement.textContent = `/${pinyinText}/`;
+          pinyinTag.classList.remove("hidden");
+        } else {
+          pinyinTag.classList.add("hidden");
+        }
+      }
+
+      // Voice recording functionality
+      async function toggleVoiceRecording() {
+        const micBtn = document.querySelector('[title="Voice input"]');
+        const micIcon = micBtn.querySelector("i");
+
+        if (!isRecording) {
+          // Start recording
+          try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+              audio: {
+                sampleRate: 16000,
+                channelCount: 1,
+                echoCancellation: true,
+                noiseSuppression: true,
+              },
+            });
+
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+
+            mediaRecorder.ondataavailable = (event) => {
+              audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+              const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+              sendAudioToServer(audioBlob);
+
+              // Stop all tracks to release microphone
+              stream.getTracks().forEach((track) => track.stop());
+            };
+
+            mediaRecorder.start();
+            isRecording = true;
+
+            // Update UI
+            micIcon.className = "fas fa-stop text-lg";
+            micBtn.classList.add("bg-red-500", "text-white");
+            micBtn.classList.remove("text-gray-400", "hover:text-gray-600");
+            micBtn.title = "Stop recording";
+
+            console.log("Recording started...");
+          } catch (error) {
+            console.error("Error accessing microphone:", error);
+            alert(
+              "Could not access microphone. Please check permissions and ensure you are using HTTPS."
+            );
+          }
+        } else {
+          // Stop recording
+          if (mediaRecorder && mediaRecorder.state === "recording") {
+            mediaRecorder.stop();
+          }
+
+          isRecording = false;
+
+          // Update UI
+          micIcon.className = "fas fa-microphone text-lg";
+          micBtn.classList.remove("bg-red-500", "text-white");
+          micBtn.classList.add("text-gray-400", "hover:text-gray-600");
+          micBtn.title = "Voice input";
+
+          console.log("Recording stopped...");
+        }
+      }
+
+      async function sendAudioToServer(audioBlob) {
+        const output = document.getElementById("georgianOutput");
+
+        try {
+          // Show processing state
+          output.textContent = "Processing speech...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+
+          const formData = new FormData();
+          formData.append("audio", audioBlob, "recording.wav");
+
+          const response = await fetch("/speech-to-text", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            if (response.status === 503) {
+              throw new Error(
+                "Speech-to-text is currently unavailable. Please type manually or try restarting the server."
+              );
+            }
+            throw new Error(
+              data.error || `HTTP error! status: ${response.status}`
+            );
+          }
+
+          if (data.error) {
+            throw new Error(data.error);
+          }
+
+          // Set the transcribed text in the input field
+          const input = document.getElementById("chineseInput");
+          input.value = data.text;
+
+          // Trigger translation
+          handleInput();
+
+          console.log("Transcribed text:", data.text);
+        } catch (error) {
+          console.error("Speech-to-text error:", error);
+          output.textContent = `Speech recognition error: ${error.message}`;
+          output.className =
+            "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+        }
+      }
+
+      // Copy functionality
+      document
+        .getElementById("copyBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          if (
+            output.textContent &&
+            !output.textContent.includes("Transliteration will appear here")
+          ) {
+            try {
+              // Copy Georgian text directly
+              const textToCopy = output.textContent.trim();
+
+              // Try modern clipboard API first
+              if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(textToCopy);
+              } else {
+                // Fallback for older browsers or non-HTTPS
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand("copy");
+                textArea.remove();
+              }
+
+              // Show success feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-green-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Copy failed:", error);
+
+              // Show error feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Share functionality
+      document
+        .getElementById("shareBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          const input = document.getElementById("chineseInput");
+
+          if (
+            output.textContent &&
+            !output.textContent.includes("Transliteration will appear here")
+          ) {
+            // Get Georgian text directly
+            const georgianText = output.textContent.trim();
+
+            // Get pinyin from tag if visible
+            const pinyinTag = document.getElementById("pinyinTag");
+            const pinyinElement = document.getElementById("pinyinText");
+            const pinyinText = !pinyinTag.classList.contains("hidden")
+              ? pinyinElement.textContent.trim()
+              : "";
+
+            let shareText = `Chinese: ${input.value}`;
+            if (pinyinText) {
+              shareText += `\nPinyin: ${pinyinText}`;
+            }
+            shareText += `\nGeorgian: ${georgianText}`;
+
+            const shareData = {
+              title: "Chinese to Georgian Translation",
+              text: shareText,
+              url: window.location.href,
+            };
+
+            try {
+              // Try native Web Share API first (mobile)
+              if (
+                navigator.share &&
+                navigator.canShare &&
+                navigator.canShare(shareData)
+              ) {
+                await navigator.share(shareData);
+                console.log("Shared successfully");
+              } else {
+                // Fallback: copy to clipboard with share format
+                const fullShareText = `${shareText}\n\nTranslated at: ${window.location.href}`;
+
+                if (navigator.clipboard && window.isSecureContext) {
+                  await navigator.clipboard.writeText(fullShareText);
+                } else {
+                  // Fallback for older browsers
+                  const textArea = document.createElement("textarea");
+                  textArea.value = fullShareText;
+                  textArea.style.position = "fixed";
+                  textArea.style.left = "-999999px";
+                  textArea.style.top = "-999999px";
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  document.execCommand("copy");
+                  textArea.remove();
+                }
+
+                // Show feedback that it was copied
+                alert("Translation copied to clipboard for sharing!");
+              }
+
+              // Visual feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-blue-custom text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Share failed:", error);
+
+              // Show error feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Auto-resize textarea (optional enhancement)
+      document
+        .getElementById("chineseInput")
+        .addEventListener("input", function () {
+          this.style.height = "auto";
+          this.style.height = Math.min(this.scrollHeight, 256) + "px";
+        });
+
+      // Add click event to microphone button
+      document.addEventListener("DOMContentLoaded", function () {
+        const micBtn = document.querySelector('[title="Voice input"]');
+        micBtn.addEventListener("click", toggleVoiceRecording);
       });
     </script>
   </body>
