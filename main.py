@@ -12,6 +12,7 @@ app = Flask(__name__)
 
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+
 # Add security headers
 @app.after_request
 def add_security_headers(response):
@@ -25,17 +26,15 @@ def add_security_headers(response):
 def get_pinyin(words):
     if not words:
         return []
+    
+    # Use primary pronunciations only (most common)
     pinyin_list = []
     for word in words:
-        for char in word:
-            pinyin_result = pypinyin.pinyin(char, style=0, heteronym=True)
-            pinyin_list.append(pinyin_result)
-
-    all_result = []
-    pinyin_list = [item[0] for item in pinyin_list]
-    pinyin_cartesian = list(itertools.product(*pinyin_list))
-    all_result = [' '.join(pinyin).replace('v', 'ü') for pinyin in pinyin_cartesian]
-    return all_result
+        word_pinyin = pypinyin.pinyin(word, style=0, heteronym=False)
+        word_result = ' '.join([item[0] for item in word_pinyin])
+        pinyin_list.append(word_result)
+    
+    return pinyin_list
 
 def get_professional_pinyin(text):
     import pypinyin
@@ -161,14 +160,16 @@ def convert(data):
             
             # Regular Chinese processing
             text_pinyin = get_pinyin([text])
-            text_georgian = get_georgian(text_pinyin)
+            text_prof_pinyin = get_professional_pinyin(text)
+            
+            # Convert to Georgian with proper spacing
+            georgian_result = map_pinyin_to_georgian(text_pinyin[0])
             
             from collections import OrderedDict
             result = OrderedDict()
-            text_prof_pinyin = get_professional_pinyin(text)
             result['ქართული'] = {
                 'pinyin': text_prof_pinyin,
-                'ქართული': ' '.join(text_georgian.values())
+                'ქართული': georgian_result
             }
             return result
         else:
@@ -222,6 +223,7 @@ def convert_endpoint():
     except Exception as e:
         app.logger.error(f"Error in convert_endpoint: {str(e)}")
         return jsonify({"error": str(e)}), 500
+
 
 if __name__ == '__main__':
     try:
