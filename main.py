@@ -5,6 +5,8 @@ import itertools
 from pypinyin_dict.pinyin_data import kxhc1983
 from flask_cors import CORS
 import unicodedata
+import os
+import pandas as pd
 # Load the pinyin data
 kxhc1983.load()
 
@@ -28,13 +30,15 @@ def get_pinyin(words):
         return []
     
     # Use primary pronunciations only (most common)
-    pinyin_list = []
-    for word in words:
-        word_pinyin = pypinyin.pinyin(word, style=0, heteronym=False)
-        word_result = ' '.join([item[0] for item in word_pinyin])
-        pinyin_list.append(word_result)
-    
-    return pinyin_list
+    # pinyin_list = []
+    # for word in words:
+    #     word_pinyin = pypinyin.pinyin(word, style=0, heteronym=False)
+    #     word_result = ' '.join([item[0] for item in word_pinyin])
+    #     pinyin_list.append(word_result)
+    pinyin_result = pypinyin.pinyin(words, style=0, heteronym=True)
+    result_tuples = list(itertools.product(*pinyin_result))
+    all_result = [' '.join(items) for items in result_tuples]
+    return all_result
 
 def get_professional_pinyin(text):
     import pypinyin
@@ -123,6 +127,76 @@ def map_pinyin_to_georgian(pinyin_str):
     georgian_syllables = [get_georgian([s]).get(s, '') for s in plain_syllables]
     return ' '.join(georgian_syllables).strip()
 
+# ---------------- Polyphonic data loading (Excel/CSV) ----------------
+def load_polyphonic_data():
+    """Load mapping from Chinese simplified char to list of readings from CSV/XLSX.
+
+    Priority:
+    1) polyphonic_full.csv in workspace root
+    2) polyphonic_full.xlsx in workspace root
+    3) polyphonic_full.csv in user's Downloads
+    Returns dict: char_simpl -> { 'all_readings': str, 'readings_list': [str, ...] }
+    """
+    candidates = [
+        os.path.join(os.getcwd(), 'polyphonic_full.csv'),
+        os.path.join(os.getcwd(), 'polyphonic_full.xlsx'),
+        os.path.join(os.path.expanduser('~'), 'Downloads', 'polyphonic_full.csv'),
+    ]
+    df = None
+    for path in candidates:
+        try:
+            if os.path.isfile(path):
+                if path.endswith('.csv'):
+                    df = pd.read_csv(path)
+                else:
+                    df = pd.read_excel(path)
+                break
+        except Exception:
+            continue
+
+    mapping = {}
+    if df is None:
+        return mapping
+
+    # Expect columns: char_simpl, all_readings
+    if 'char_simpl' not in df.columns or 'all_readings' not in df.columns:
+        return mapping
+
+    for _, row in df[['char_simpl', 'all_readings']].dropna().iterrows():
+        char = str(row['char_simpl']).strip()
+        readings = str(row['all_readings']).strip()
+        if not char or not readings:
+            continue
+        # Split readings by spaces into tokens
+        # Keep tones as-is; trim empty tokens
+        tokens = [t.strip() for t in readings.split(' ') if t.strip()]
+        if not tokens:
+            continue
+        mapping[char] = {
+            'all_readings': readings,
+            'readings_list': tokens,
+        }
+    return mapping
+
+
+POLYPHONIC_MAP = load_polyphonic_data()
+
+def lookup_polyphonic_readings(text):
+    """If text is a single Chinese char and exists in the polyphonic map,
+    return (main_pinyin, other_pinyins_list). Otherwise return None.
+    """
+    if not text or len(text) != 1:
+        return None
+    data = POLYPHONIC_MAP.get(text)
+    if not data:
+        return None
+    readings = data.get('readings_list', [])
+    if not readings:
+        return None
+    main = readings[0]
+    others = readings[1:] if len(readings) > 1 else []
+    return (main, others)
+
 def convert(data):
     try:
         # Get the single input text
@@ -158,7 +232,22 @@ def convert(data):
                 prof_pinyin = get_professional_pinyin(text)
                 return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[text]}}
             
-            # Regular Chinese processing
+            # Try polyphonic data lookup for single character
+            polyphonic = lookup_polyphonic_readings(text)
+            if polyphonic is not None:
+                main_pinyin, other_pinyins = polyphonic
+                # Convert to Georgian from main pinyin only
+                georgian_result = map_pinyin_to_georgian(main_pinyin)
+                from collections import OrderedDict
+                result = OrderedDict()
+                result['ქართული'] = {
+                    'pinyin': main_pinyin,
+                    'other_pinyin': other_pinyins,
+                    'ქართული': georgian_result
+                }
+                return result
+
+            # Regular Chinese processing (fallback)
             text_pinyin = get_pinyin([text])
             text_prof_pinyin = get_professional_pinyin(text)
             

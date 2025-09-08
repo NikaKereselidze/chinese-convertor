@@ -111,10 +111,16 @@
               class="hidden absolute bottom-16 left-4 right-4"
             >
               <div
-                class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full border border-blue-200 inline-block"
+                class="bg-blue-100 text-blue-800 text-sm px-3 py-1 rounded-full border border-blue-200 inline-flex items-center space-x-2"
               >
-                <span class="text-xs font-semibold mr-1">Pinyin:</span>
-                <span class="font-mono" id="pinyinText"></span>
+                <div>
+                  <span class="text-xs font-semibold mr-1">Pinyin:</span>
+                  <span class="font-mono" id="pinyinText"></span>
+                </div>
+                <div id="otherPinyinWrapper" class="hidden">
+                  <span class="text-xs font-semibold mx-2">Other:</span>
+                  <span class="font-mono" id="otherPinyinText"></span>
+                </div>
               </div>
             </div>
 
@@ -538,6 +544,8 @@
         const copyBtn = document.getElementById("copyBtn");
         const shareBtn = document.getElementById("shareBtn");
         const input = document.getElementById("chineseInput");
+        // Reset other pinyin between renders to avoid stale values
+        window.__otherPinyin = [];
 
         if (data.error) {
           output.textContent = data.error;
@@ -563,6 +571,9 @@
             if (value && typeof value === "object" && value.ქართული) {
               georgianResult = value.ქართული;
               pinyinResult = value.pinyin;
+              window.__otherPinyin = Array.isArray(value.other_pinyin)
+                ? value.other_pinyin
+                : [];
               break;
             }
           }
@@ -576,7 +587,7 @@
 
           // Show pinyin as a tag below the input (only in Chinese mode)
           if (currentMode === "chinese" && pinyinResult) {
-            updatePinyinTag(pinyinResult);
+            updatePinyinTag(pinyinResult, window.__otherPinyin || []);
           } else {
             document.getElementById("pinyinTag").classList.add("hidden");
           }
@@ -604,15 +615,29 @@
         }
       }
 
-      function updatePinyinTag(pinyinText) {
+      function updatePinyinTag(pinyinText, otherList) {
         const pinyinTag = document.getElementById("pinyinTag");
         const pinyinTextElement = document.getElementById("pinyinText");
+        const otherWrapper = document.getElementById("otherPinyinWrapper");
+        const otherTextElement = document.getElementById("otherPinyinText");
 
         if (pinyinText) {
           pinyinTextElement.textContent = `/${pinyinText}/`;
+          // Handle other readings
+          if (Array.isArray(otherList) && otherList.length > 0) {
+            otherTextElement.textContent = otherList
+              .map((p) => `/${p}/`)
+              .join(" ");
+            otherWrapper.classList.remove("hidden");
+          } else {
+            otherWrapper.classList.add("hidden");
+            otherTextElement.textContent = "";
+          }
           pinyinTag.classList.remove("hidden");
         } else {
           pinyinTag.classList.add("hidden");
+          otherWrapper.classList.add("hidden");
+          otherTextElement.textContent = "";
         }
       }
 
