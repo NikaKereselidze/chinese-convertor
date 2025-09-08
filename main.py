@@ -128,6 +128,22 @@ def map_pinyin_to_georgian(pinyin_str):
     return ' '.join(georgian_syllables).strip()
 
 # ---------------- Polyphonic data loading (Excel/CSV) ----------------
+def contains_cjk(text: str) -> bool:
+    """Return True if any char is in common CJK ranges (incl. extensions)."""
+    for ch in text:
+        cp = ord(ch)
+        if (
+            0x3400 <= cp <= 0x4DBF or  # CJK Ext A
+            0x4E00 <= cp <= 0x9FFF or  # CJK Unified
+            0xF900 <= cp <= 0xFAFF or  # CJK Compatibility Ideographs
+            0x20000 <= cp <= 0x2A6DF or  # CJK Ext B
+            0x2A700 <= cp <= 0x2B73F or  # CJK Ext C
+            0x2B740 <= cp <= 0x2B81F or  # CJK Ext D
+            0x2B820 <= cp <= 0x2CEAF or  # CJK Ext E
+            0x2F800 <= cp <= 0x2FA1F     # CJK Compatibility Ideographs Suppl.
+        ):
+            return True
+    return False
 def load_polyphonic_data():
     """Load mapping from Chinese simplified char to list of readings from CSV/XLSX.
 
@@ -213,8 +229,8 @@ def convert(data):
             "孔子": "კონფუცი",
         }
         
-        # Check if input contains Chinese characters
-        has_chinese = bool(re.search(r'[\u4e00-\u9fa5]', text))
+        # Check if input contains Chinese characters (include CJK extensions)
+        has_chinese = contains_cjk(text)
         
         if has_chinese:
             # Handle Chinese input
