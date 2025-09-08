@@ -6,7 +6,7 @@ from pypinyin_dict.pinyin_data import kxhc1983
 from flask_cors import CORS
 import unicodedata
 import os
-import pandas as pd
+import csv
 # Load the pinyin data
 kxhc1983.load()
 
@@ -139,43 +139,34 @@ def load_polyphonic_data():
     """
     candidates = [
         os.path.join(os.getcwd(), 'polyphonic_full.csv'),
-        os.path.join(os.getcwd(), 'polyphonic_full.xlsx'),
         os.path.join(os.path.expanduser('~'), 'Downloads', 'polyphonic_full.csv'),
     ]
-    df = None
-    for path in candidates:
-        try:
-            if os.path.isfile(path):
-                if path.endswith('.csv'):
-                    df = pd.read_csv(path)
-                else:
-                    df = pd.read_excel(path)
-                break
-        except Exception:
-            continue
 
     mapping = {}
-    if df is None:
+    source_path = next((p for p in candidates if os.path.isfile(p)), None)
+    if not source_path:
         return mapping
 
-    # Expect columns: char_simpl, all_readings
-    if 'char_simpl' not in df.columns or 'all_readings' not in df.columns:
-        return mapping
+    try:
+        with open(source_path, 'r', encoding='utf-8-sig', newline='') as f:
+            reader = csv.DictReader(f)
+            # Expect columns: char_simpl, all_readings
+            for row in reader:
+                char = str(row.get('char_simpl', '')).strip()
+                readings = str(row.get('all_readings', '')).strip()
+                if not char or not readings:
+                    continue
+                tokens = [t.strip() for t in readings.split(' ') if t.strip()]
+                if not tokens:
+                    continue
+                mapping[char] = {
+                    'all_readings': readings,
+                    'readings_list': tokens,
+                }
+    except Exception:
+        # If CSV read fails, leave mapping empty to fallback gracefully
+        return {}
 
-    for _, row in df[['char_simpl', 'all_readings']].dropna().iterrows():
-        char = str(row['char_simpl']).strip()
-        readings = str(row['all_readings']).strip()
-        if not char or not readings:
-            continue
-        # Split readings by spaces into tokens
-        # Keep tones as-is; trim empty tokens
-        tokens = [t.strip() for t in readings.split(' ') if t.strip()]
-        if not tokens:
-            continue
-        mapping[char] = {
-            'all_readings': readings,
-            'readings_list': tokens,
-        }
     return mapping
 
 
