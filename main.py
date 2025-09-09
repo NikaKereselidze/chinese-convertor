@@ -2,13 +2,13 @@ from flask import Flask, render_template, request, jsonify
 import pypinyin
 import re
 import itertools
-from pypinyin_dict.pinyin_data import kxhc1983
+from pypinyin_dict.pinyin_data import ktghz2013
 from flask_cors import CORS
 import unicodedata
 import os
 import csv
 # Load the pinyin data
-kxhc1983.load()
+ktghz2013.load()
 
 app = Flask(__name__)
 
