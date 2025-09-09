@@ -43,7 +43,7 @@ def get_pinyin(words):
 def get_professional_pinyin(text):
     import pypinyin
     from pypinyin import Style
-    pinyin_list = pypinyin.pinyin(text, style=Style.TONE, heteronym=False, errors='default', strict=True)
+    pinyin_list = pypinyin.pinyin(text, style=0, heteronym=False, errors='default', strict=True)
     return ' '.join([item[0] for item in pinyin_list])
 
 def remove_pinyin_tone_marks(pinyin):
@@ -127,6 +127,37 @@ def map_pinyin_to_georgian(pinyin_str):
     georgian_syllables = [get_georgian([s]).get(s, '') for s in plain_syllables]
     return ' '.join(georgian_syllables).strip()
 
+def deduplicate_preserve_order(items):
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
+def group_tone_variants_by_base(pinyin_list_with_tones):
+    """Group tone-marked pinyin variants by their base (without tone marks)."""
+    base_to_variants = {}
+    order = []
+    for p in pinyin_list_with_tones:
+        base = remove_pinyin_tone_marks(p)
+        if base not in base_to_variants:
+            base_to_variants[base] = []
+            order.append(base)
+        if p not in base_to_variants[base]:
+            base_to_variants[base].append(p)
+    return order, base_to_variants
+
+def deduplicate_preserve_order(items):
+    seen = set()
+    result = []
+    for item in items:
+        if item not in seen:
+            seen.add(item)
+            result.append(item)
+    return result
+
 # ---------------- Polyphonic data loading (Excel/CSV) ----------------
 def contains_cjk(text: str) -> bool:
     """Return True if any char is in common CJK ranges (incl. extensions)."""
@@ -206,8 +237,9 @@ def lookup_polyphonic_readings(text):
 
 def convert(data):
     try:
-        # Get the single input text
+        # Get the single input text and tone toggle
         text = data.get('text', '').strip()
+        include_tones = bool(data.get('include_tones', False))
         
         if not text:
             return {'error': 'Please enter some text.\nგთხოვთ შეიყვანოთ ტექსტი.'}
@@ -243,51 +275,97 @@ def convert(data):
             polyphonic = lookup_polyphonic_readings(text)
             if polyphonic is not None:
                 main_pinyin, other_pinyins = polyphonic
-                # Convert to Georgian from main pinyin only
-                georgian_result = map_pinyin_to_georgian(main_pinyin)
+                # Group tone variants by base from tone-marked forms
+                all_with_tones = [main_pinyin] + other_pinyins
+                bases_order, base_to_variants = group_tone_variants_by_base(all_with_tones)
+
+                # Normalize pinyin (strip tones) and deduplicate
+                main_plain = remove_pinyin_tone_marks(main_pinyin)
+                others_plain = [remove_pinyin_tone_marks(p) for p in other_pinyins]
+                others_plain = [p for p in others_plain if p and p != main_plain]
+                others_plain = deduplicate_preserve_order(others_plain)
+
+                # Convert to Georgian from normalized pinyin and deduplicate
+                georgian_result = map_pinyin_to_georgian(main_plain)
+                other_georgians = [map_pinyin_to_georgian(p) for p in others_plain]
+                other_georgians = [g for g in other_georgians if g and g != georgian_result]
+                other_georgians = deduplicate_preserve_order(other_georgians)
+
                 from collections import OrderedDict
                 result = OrderedDict()
                 result['ქართული'] = {
-                    'pinyin': main_pinyin,
-                    'other_pinyin': other_pinyins,
+                    'pinyin': main_plain,
+                    'other_pinyin': others_plain,
+                    'other_georgian': other_georgians,
                     'ქართული': georgian_result
                 }
+                if include_tones:
+                    grouped_pinyin = [', '.join(base_to_variants[b]) for b in bases_order]
+                    grouped_georgian = [map_pinyin_to_georgian(b) for b in bases_order]
+                    result['ქართული']['grouped_pinyin'] = grouped_pinyin
+                    result['ქართული']['grouped_georgian'] = grouped_georgian
                 return result
 
             # Regular Chinese processing (fallback)
             text_pinyin = get_pinyin([text])
             text_prof_pinyin = get_professional_pinyin(text)
             
+            # Compute variants (tone-less) using heteronyms
+            # text_pinyin is combinations (no tones) with first as main
+            base_variants = []
+            if isinstance(text_pinyin, list) and len(text_pinyin) > 0:
+                base_variants = text_pinyin
+            # Deduplicate while preserving order
+            base_variants_dedup = []
+            seen_b = set()
+            for v in base_variants:
+                v_plain = remove_pinyin_tone_marks(v).strip()
+                if v_plain and v_plain not in seen_b:
+                    seen_b.add(v_plain)
+                    base_variants_dedup.append(v_plain)
+            main_base = base_variants_dedup[0] if base_variants_dedup else remove_pinyin_tone_marks(text_prof_pinyin)
+            other_bases = base_variants_dedup[1:] if len(base_variants_dedup) > 1 else []
+            
             # Convert to Georgian with proper spacing
-            georgian_result = map_pinyin_to_georgian(text_pinyin[0])
+            georgian_result = map_pinyin_to_georgian(main_base)
+            other_georgians = [map_pinyin_to_georgian(p) for p in other_bases]
+            other_georgians = [g for g in other_georgians if g and g != georgian_result]
+            
+            # Grouped tone variants when requested
+            grouped_pinyin = None
+            grouped_georgian = None
+            if include_tones:
+                try:
+                    from pypinyin import Style
+                    # Get tone variants per syllable with heteronyms
+                    tone_syllables = pypinyin.pinyin(text, style=Style.TONE, heteronym=True, errors='default', strict=True)
+                    # Build combinations with tones
+                    import itertools as _it
+                    tone_combos = [' '.join(items) for items in _it.product(*tone_syllables)]
+                    # Group by base
+                    bases_order, base_to_variants = group_tone_variants_by_base(tone_combos)
+                    grouped_pinyin = [', '.join(base_to_variants[b]) for b in bases_order]
+                    grouped_georgian = [map_pinyin_to_georgian(b) for b in bases_order]
+                    # Use grouped main/others if available
+                    if grouped_pinyin:
+                        main_base = remove_pinyin_tone_marks(grouped_pinyin[0].split(',')[0])
+                        georgian_result = grouped_georgian[0]
+                        other_bases = [remove_pinyin_tone_marks(x.split(',')[0]) for x in grouped_pinyin[1:]]
+                        other_georgians = grouped_georgian[1:]
+                except Exception:
+                    pass
             
             from collections import OrderedDict
             result = OrderedDict()
             result['ქართული'] = {
-                'pinyin': text_prof_pinyin,
+                'pinyin': main_base,
+                'other_pinyin': other_bases,
+                'other_georgian': other_georgians,
                 'ქართული': georgian_result
             }
-            return result
-        else:
-            # Handle pinyin input (convert to lowercase for consistency)
-            text = text.lower()
-            
-            # Check special case for pinyin
-            def match_special(pinyin):
-                for hanzi, geo in special_cases.items():
-                    special_pinyin = get_professional_pinyin(hanzi)
-                    if pinyin.replace(' ', '').lower() == special_pinyin.replace(' ', '').lower():
-                        return geo
-                return None
-            
-            from collections import OrderedDict
-            result = OrderedDict()
-            geo = match_special(text)
-            georgian = geo or map_pinyin_to_georgian(text)
-            result['ქართული'] = {
-                'pinyin': text,
-                'ქართული': georgian
-            }
+            if include_tones and grouped_pinyin and grouped_georgian:
+                result['ქართული']['grouped_pinyin'] = grouped_pinyin
+                result['ქართული']['grouped_georgian'] = grouped_georgian
             return result
         
     except Exception as e:
@@ -322,18 +400,4 @@ def convert_endpoint():
 
 
 if __name__ == '__main__':
-    try:
-        with open("datasur.txt", "r", encoding="utf-8") as infile, \
-             open("datasur_converted.txt", "w", encoding="utf-8") as outfile:
-            lines = [line.strip() for line in infile if line.strip()]
-            outfile.write("Original\t=>\tGeorgian\n")
-            for line in lines:
-                result = convert({'text': line})
-                georgian = result.get('result', '')
-                if isinstance(georgian, dict):
-                    georgian = ', '.join(georgian.values())
-                outfile.write(f"{line}\t=>\t{georgian}\n")
-    except Exception as e:
-        print(f"Error processing datasur.txt: {e}")
-
     app.run(debug=True, port=8080, host='0.0.0.0') 
