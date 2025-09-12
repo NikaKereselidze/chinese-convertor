@@ -518,6 +518,15 @@
           shareBtn.disabled = true;
           copyBtn.classList.add("opacity-50");
           shareBtn.classList.add("opacity-50");
+          // Hide and clear pinyin UI when input is empty
+          const pinyinTag = document.getElementById("pinyinTag");
+          const pinyinTextElement = document.getElementById("pinyinText");
+          const pinyinAltSection = document.getElementById("pinyinAltSection");
+          const pinyinAltList = document.getElementById("pinyinAltList");
+          if (pinyinTag) pinyinTag.classList.add("hidden");
+          if (pinyinTextElement) pinyinTextElement.textContent = "";
+          if (pinyinAltSection) pinyinAltSection.classList.add("hidden");
+          if (pinyinAltList) pinyinAltList.innerHTML = "";
           return;
         }
 
@@ -702,14 +711,35 @@
         const pinyinAltList = document.getElementById("pinyinAltList");
 
         if (pinyinText) {
-          pinyinTextElement.textContent = `/${pinyinText}/`;
+          // Format main pinyin: if grouped (comma-separated), wrap each with its own slashes
+          if (typeof pinyinText === "string" && pinyinText.includes(",")) {
+            const parts = pinyinText
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+            pinyinTextElement.textContent = parts
+              .map((s) => `/${s}/`)
+              .join(", ");
+          } else {
+            pinyinTextElement.textContent = `/${pinyinText}/`;
+          }
           // Render other readings aligned to Georgian list
           if (Array.isArray(otherList) && otherList.length > 0) {
             const rows = otherList.map((p, i) => {
               const g = (otherGeorgian || [])[i] || "";
+              let displayPinyin = p;
+              if (typeof p === "string" && p.includes(",")) {
+                const parts = p
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                displayPinyin = parts.map((s) => `/${s}/`).join(", ");
+              } else {
+                displayPinyin = `/${p}/`;
+              }
               return (
                 `<div class=\"grid grid-cols-2 gap-3\">` +
-                `<div class=\"font-mono text-blue-800\">/${p}/</div>` +
+                `<div class=\"font-mono text-blue-800\">${displayPinyin}</div>` +
                 `<div class=\"invisible\">${g}</div>` +
                 `</div>`
               );

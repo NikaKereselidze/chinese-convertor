@@ -35,6 +35,8 @@ def get_pinyin(words, include_tones=False):
 
 
 def remove_pinyin_tone_marks(pinyin_text):
+    if isinstance(pinyin_text, (list, tuple)):
+        pinyin_text = ' '.join(pinyin_text)
     return ''.join(
         c for c in unicodedata.normalize('NFD', pinyin_text)
         if unicodedata.category(c) != 'Mn'
@@ -129,6 +131,52 @@ def deduplicate_preserve_order(items):
     return result
 
 
+def group_tone_variants_by_base(pinyin_list):
+    """Group pinyin variants by their base (tone-less) form."""
+    groups = {}
+    for pinyin in pinyin_list:
+        base = remove_pinyin_tone_marks(pinyin)
+        if base not in groups:
+            groups[base] = []
+        groups[base].append(pinyin)
+    
+    # Return as list of comma-separated groups
+    result = []
+    for base, variants in groups.items():
+        if len(variants) == 1:
+            result.append(variants[0])
+        else:
+            result.append(', '.join(variants))
+    return result
+
+
+def group_by_base_with_order(pinyin_list):
+    """Return (grouped_pinyin, base_order) preserving first-seen order by base.
+
+    grouped_pinyin: list of strings where each string joins tone variants by comma
+    base_order: list of tone-less base pinyins aligned with grouped_pinyin
+    """
+    groups = {}
+    base_order = []
+    for v in pinyin_list:
+        base = remove_pinyin_tone_marks(v)
+        if base not in groups:
+            groups[base] = []
+            base_order.append(base)
+        groups[base].append(v)
+    grouped = [', '.join(groups[b]) if len(groups[b]) > 1 else groups[b][0] for b in base_order]
+    return grouped, base_order
+
+
+def get_professional_pinyin(text, include_tones=False):
+    """Get professional pinyin with heteronym support."""
+    style = pypinyin.Style.TONE if include_tones else pypinyin.Style.NORMAL
+    pinyin_result = pypinyin.pinyin(text, style=style, heteronym=True)
+    result_tuples = list(itertools.product(*pinyin_result))
+    all_result = [' '.join(items) for items in result_tuples]
+    return all_result
+
+
 # ---------------- Polyphonic data loading ----------------
 def contains_cjk(text: str) -> bool:
     """Return True if any char is in common CJK ranges (incl. extensions)."""
@@ -215,7 +263,7 @@ def convert(data):
             "西藏": "ტიბეტი",
             "乌鲁木齐": "ურუმჩი",
             "中山孙": "სუნ იატსენი",
-            "介石蒋": "ჩან კაიში",
+            "蒋介石": "ჩან კაიში",
             "李小龙": "ბრუს ლი",
             "成龙": "ჯეკი ჩანი",
             "成吉思汗": "ჩინგიზ-ყაენი",
@@ -229,8 +277,21 @@ def convert(data):
 
         # Special-case override
         if text in special_cases:
-            prof_pinyin = get_pinyin(text, include_tones)
-            return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[text]}}
+            # For special cases, show the predefined Georgian name and a single pinyin reading
+            style = pypinyin.Style.TONE if include_tones else pypinyin.Style.NORMAL
+            py_syllables = pypinyin.pinyin(text, style=style, heteronym=False)
+            single_pinyin = ' '.join(s[0] for s in py_syllables if s and s[0])
+            if not include_tones:
+                single_pinyin = remove_pinyin_tone_marks(single_pinyin)
+
+            return {
+                "special": {
+                    "pinyin": single_pinyin,
+                    "other_pinyin": [],
+                    "ქართული": special_cases[text],
+                    "other_georgian": []
+                }
+            }
 
         # Polyphonic dictionary lookup (supports multi-char phrases too)
         polyphonic = lookup_polyphonic_readings(text)
@@ -238,21 +299,34 @@ def convert(data):
             main_pinyin, other_pinyins = polyphonic
             variants = [main_pinyin] + other_pinyins
         else:
-            # fallback: canonical reading
-            variants = get_pinyin(text, include_tones)
+            # fallback: use professional pinyin with heteronym support
+            variants = get_professional_pinyin(text, include_tones)
 
-        # Deduplicate
-        variants = deduplicate_preserve_order(variants)
+        # Apply grouping/deduplication based on tone setting
+        if include_tones:
+            grouped_variants, base_order = group_by_base_with_order(variants)
+        else:
+            # Strip tones so tone variants collapse for single characters
+            variants_no_tone = [remove_pinyin_tone_marks(v) for v in variants]
+            grouped_variants = deduplicate_preserve_order(variants_no_tone)
 
         # Georgian mapping
-        georgian_variants = [map_pinyin_to_georgian(remove_pinyin_tone_marks(v)) for v in variants]
+        if include_tones:
+            # Use base_order so each group maps to a single Georgian variant
+            georgian_variants = [map_pinyin_to_georgian(b) for b in base_order]
+            georgian_variants = deduplicate_preserve_order(georgian_variants)
+        else:
+            georgian_variants = [map_pinyin_to_georgian(v) for v in grouped_variants]
+            georgian_variants = deduplicate_preserve_order(georgian_variants)
 
         return {
             "ქართული": {
-                "pinyin": variants[0],
-                "other_pinyin": variants[1:],
-                "ქართული": georgian_variants[0],
-                "other_georgian": georgian_variants[1:]
+                "pinyin": grouped_variants[0] if grouped_variants else "",
+                "other_pinyin": grouped_variants[1:] if len(grouped_variants) > 1 else [],
+                "ქართული": georgian_variants[0] if georgian_variants else "",
+                "other_georgian": georgian_variants[1:] if len(georgian_variants) > 1 else [],
+                "grouped_pinyin": grouped_variants if include_tones else None,
+                "grouped_georgian": georgian_variants if include_tones else None
             }
         }
 
