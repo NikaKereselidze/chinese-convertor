@@ -130,8 +130,17 @@
             <!-- Pinyin Alternatives Section (with padding) -->
             <div id="pinyinAltSection" class="hidden px-4">
               <div class="mt-3 border-t border-gray-200 pt-3">
-                <div class="underline text-xs text-gray-500 mb-2">
-                  სხვა ვარიანტები სიხშირის მიხედვით
+                <div
+                  class="text-xs text-gray-500 mb-2 inline-flex items-center gap-1 group relative"
+                >
+                  ვარიანტები
+                  <i
+                    class="fa-solid fa-circle-info text-gray-400 hover:text-gray-600"
+                  ></i>
+                  <span
+                    class="absolute left-0 top-0 -translate-y-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 shadow whitespace-nowrap z-10"
+                    >ვარიანტები დალაგებულია სიხშირის მიხედვით</span
+                  >
                 </div>
                 <div
                   id="pinyinAltList"
@@ -635,7 +644,10 @@
             output.innerHTML = `
               <div class="mb-12">${mainGeo}</div>
               <div class="mt-3 border-t border-gray-200 pt-3">
-                <div class="underline text-xs text-gray-500 mb-1">სხვა ვარიანტები სიხშირის მიხედვით</div>
+                <div class="text-xs text-gray-500 mb-1 inline-flex items-center gap-1 group relative">ვარიანტები
+                  <i class="fa-solid fa-circle-info text-gray-400 hover:text-gray-600"></i>
+                  <span class="absolute left-0 top-0 -translate-y-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 shadow whitespace-nowrap z-10">ვარიანტები დალაგებულია სიხშირის მიხედვით</span>
+                </div>
                 <div class="text-gray-800 space-y-1 text-sm">${listItems}</div>
               </div>
             `;

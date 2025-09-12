@@ -40,11 +40,16 @@ def get_pinyin(words):
     all_result = [' '.join(items) for items in result_tuples]
     return all_result
 
-def get_professional_pinyin(text):
+def get_professional_pinyin(text, include_tones=False):
     import pypinyin
     from pypinyin import Style
-    pinyin_list = pypinyin.pinyin(text, style=0, heteronym=False, errors='default', strict=True)
-    return ' '.join([item[0] for item in pinyin_list])
+    style = Style.TONE if include_tones else 0
+    # pinyin_list = pypinyin.pinyin(text, style=style, heteronym=False, errors='default', strict=True)
+    # return ' '.join([item[0] for item in pinyin_list])
+    pinyin_result = pypinyin.pinyin(text, style=style, heteronym=True)
+    result_tuples = list(itertools.product(*pinyin_result))
+    all_result = [' '.join(items) for items in result_tuples]
+    return all_result
 
 def remove_pinyin_tone_marks(pinyin):
     # Replace diacritics with their base letter
@@ -268,29 +273,23 @@ def convert(data):
             # Handle Chinese input
             # Check for special cases first
             if text in special_cases:
-                prof_pinyin = get_professional_pinyin(text)
+                prof_pinyin = get_professional_pinyin(text, include_tones)
                 return {"special": {"pinyin": prof_pinyin, "ქართული": special_cases[text]}}
             
             # Try polyphonic data lookup for single character
             polyphonic = lookup_polyphonic_readings(text)
             if polyphonic is not None:
                 main_pinyin, other_pinyins = polyphonic
-                # Group tone variants by base from tone-marked forms
+                # Group tone variants by base using tone-marked forms
                 all_with_tones = [main_pinyin] + other_pinyins
                 bases_order, base_to_variants = group_tone_variants_by_base(all_with_tones)
-
-                # Normalize pinyin (strip tones) and deduplicate
-                main_plain = remove_pinyin_tone_marks(main_pinyin)
-                others_plain = [remove_pinyin_tone_marks(p) for p in other_pinyins]
-                others_plain = [p for p in others_plain if p and p != main_plain]
-                others_plain = deduplicate_preserve_order(others_plain)
-
-                # Convert to Georgian from normalized pinyin and deduplicate
+                # Determine base list (no tones)
+                main_plain = bases_order[0] if bases_order else remove_pinyin_tone_marks(main_pinyin)
+                others_plain = bases_order[1:] if len(bases_order) > 1 else []
+                # Georgian conversion from normalized pinyin
                 georgian_result = map_pinyin_to_georgian(main_plain)
                 other_georgians = [map_pinyin_to_georgian(p) for p in others_plain]
                 other_georgians = [g for g in other_georgians if g and g != georgian_result]
-                other_georgians = deduplicate_preserve_order(other_georgians)
-
                 from collections import OrderedDict
                 result = OrderedDict()
                 result['ქართული'] = {
@@ -308,7 +307,7 @@ def convert(data):
 
             # Regular Chinese processing (fallback)
             text_pinyin = get_pinyin([text])
-            text_prof_pinyin = get_professional_pinyin(text)
+            text_prof_pinyin = get_professional_pinyin(text, include_tones)
             
             # Compute variants (tone-less) using heteronyms
             # text_pinyin is combinations (no tones) with first as main
@@ -338,7 +337,7 @@ def convert(data):
                 try:
                     from pypinyin import Style
                     # Get tone variants per syllable with heteronyms
-                    tone_syllables = pypinyin.pinyin(text, style=Style.TONE, heteronym=True, errors='default', strict=True)
+                    tone_syllables = pypinyin.pinyin(text, style=Style.TONE, heteronym=True)
                     # Build combinations with tones
                     import itertools as _it
                     tone_combos = [' '.join(items) for items in _it.product(*tone_syllables)]
@@ -387,7 +386,6 @@ def convert_endpoint():
             return jsonify({"error": "Invalid JSON data"}), 400
         print("Received data:", data)
         result = convert(data)
-        print("test", result)
         if isinstance(result, str):
             return jsonify({"result": result})
         elif result is None:
