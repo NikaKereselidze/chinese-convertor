@@ -49,6 +49,9 @@ def get_georgian(pinyin_list):
 
     all_result = {}
     for pinyin in pinyin_list:
+        # Convert to lowercase for processing but keep original for result key
+        pinyin_lower = pinyin.lower()
+        
         # long replacements first
         replacements_long = {
             'ci': 'ც',
@@ -67,9 +70,9 @@ def get_georgian(pinyin_list):
             'ui': 'uei'
         }
         pattern = '|'.join(re.escape(char) for char in replacements_long.keys())
-        text_long = re.sub(pattern, lambda match: replacements_long[match.group()], pinyin)
+        text_long = re.sub(pattern, lambda match: replacements_long[match.group()], pinyin_lower, flags=re.IGNORECASE)
 
-        text_long = re.sub(r'(?<=[jqxy])u', 'iu', text_long)
+        text_long = re.sub(r'(?<=[jqxy])u', 'iu', text_long, flags=re.IGNORECASE)
         if 'iuan' in text_long and 'g' not in text_long[text_long.index('iuan')+3:]:
             text_long = text_long.replace('iuan', 'iuen')
         if 'ian' in text_long:
@@ -104,7 +107,7 @@ def get_georgian(pinyin_list):
             'ü': 'იუ'
         }
         pattern_short = '|'.join(re.escape(char) for char in replacements_short.keys())
-        text_short = re.sub(pattern_short, lambda match: replacements_short[match.group()], text_long)
+        text_short = re.sub(pattern_short, lambda match: replacements_short[match.group()], text_long, flags=re.IGNORECASE)
 
         text_short = text_short.replace(' ', '')
         pinyin_clean = pinyin.replace(' ', '')
