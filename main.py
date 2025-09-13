@@ -272,8 +272,7 @@ def convert(data):
         }
 
         has_chinese = contains_cjk(text)
-        if not has_chinese:
-            return {"error": "No Chinese text detected."}
+    
 
         # Special-case override
         if text in special_cases:
@@ -321,11 +320,11 @@ def convert(data):
 
         return {
             "ქართული": {
-                "pinyin": grouped_variants[0] if grouped_variants else "",
-                "other_pinyin": grouped_variants[1:] if len(grouped_variants) > 1 else [],
+                "pinyin": grouped_variants[0] if grouped_variants and has_chinese else "",
+                "other_pinyin": grouped_variants[1:] if len(grouped_variants) > 1 and has_chinese else [],
                 "ქართული": georgian_variants[0] if georgian_variants else "",
                 "other_georgian": georgian_variants[1:] if len(georgian_variants) > 1 else [],
-                "grouped_pinyin": grouped_variants if include_tones else None,
+                "grouped_pinyin": grouped_variants if include_tones and has_chinese else None,
                 "grouped_georgian": georgian_variants if include_tones else None
             }
         }
