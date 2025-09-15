@@ -263,6 +263,7 @@ def convert(data):
     try:
         text = data.get('text', '').strip()
         include_tones = bool(data.get('include_tones', False))
+        show_case_suffix = bool(data.get('show_case_suffix', True))
 
         if not text:
             return {'error': 'Please enter some text.\nგთხოვთ შეიყვანოთ ტექსტი.'}
@@ -276,7 +277,7 @@ def convert(data):
             "澳门": "მაკაო",
             "西藏": "ტიბეტი",
             "乌鲁木齐": "ურუმჩი",
-            "中山孙": "სუნ იატსენი",
+            "孙中山": "სუნ იატსენი",
             "蒋介石": "ჩან კაიში",
             "李小龙": "ბრუს ლი",
             "成龙": "ჯეკი ჩანი",
@@ -317,7 +318,8 @@ def convert(data):
                     single_pinyin = remove_pinyin_tone_marks(single_pinyin)
 
                 translit_georgian = map_pinyin_to_georgian(remove_pinyin_tone_marks(single_pinyin))
-                translit_georgian = ensure_georgian_vowel_end(translit_georgian)
+                if show_case_suffix:
+                    translit_georgian = ensure_georgian_vowel_end(translit_georgian)
 
                 return {
                     "special": {
@@ -339,7 +341,8 @@ def convert(data):
                 single_pinyin = remove_pinyin_tone_marks(single_pinyin)
 
             translit_georgian = map_pinyin_to_georgian(remove_pinyin_tone_marks(single_pinyin))
-            translit_georgian = ensure_georgian_vowel_end(translit_georgian)
+            if show_case_suffix:
+                translit_georgian = ensure_georgian_vowel_end(translit_georgian)
 
             return {
                 "special": {
@@ -372,11 +375,13 @@ def convert(data):
         if include_tones:
             # Use base_order so each group maps to a single Georgian variant
             georgian_variants = [map_pinyin_to_georgian(b) for b in base_order]
-            georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
+            if show_case_suffix:
+                georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
         else:
             georgian_variants = [map_pinyin_to_georgian(v) for v in grouped_variants]
-            georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
+            if show_case_suffix:
+                georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
 
         return {

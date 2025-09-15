@@ -413,6 +413,12 @@
             <div class="flex items-center space-x-2">
               <span class="font-medium text-gray-700">ქართული</span>
             </div>
+            <div class="ml-auto flex items-center space-x-2">
+              <label for="caseToggle" class="text-xs text-gray-600 select-none"
+                >ბრუნვის ნიშნის ჩვენება</label
+              >
+              <input id="caseToggle" type="checkbox" class="h-4 w-4" />
+            </div>
           </div>
 
           <!-- Output Area -->
@@ -479,6 +485,7 @@
       let debounceTimer = null;
       let currentMode = "chinese";
       let includeTones = false;
+      let showCaseSuffix = true;
 
       // Tones toggle listener
       const tonesEl = document.getElementById("tonesToggle");
@@ -491,6 +498,21 @@
             convertText(val);
           }
         });
+      }
+
+      // Case suffix toggle listener
+      const caseEl = document.getElementById("caseToggle");
+      if (caseEl) {
+        caseEl.addEventListener("change", function () {
+          showCaseSuffix = this.checked;
+          const val = document.getElementById("chineseInput").value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
+        });
+        // Default ON as requested behavior
+        caseEl.checked = true;
       }
 
       // Mode switching functionality
@@ -830,7 +852,11 @@
         output.className =
           "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
 
-        const payload = { text: text, include_tones: includeTones };
+        const payload = {
+          text: text,
+          include_tones: includeTones,
+          show_case_suffix: showCaseSuffix,
+        };
 
         fetch("/convert", {
           method: "POST",
@@ -890,15 +916,27 @@
         if (data.special) {
           georgianResult = data.special.ქართული;
           pinyinResult = data.special.pinyin;
-          // Render special cases: main special name, then pinyin transliteration section
+          // Render special cases: labeled main name, then pinyin transliteration section
           const translit = data.special.translit_georgian || "";
           const title = "ფინინის ტრანსლიტერაცია";
-          let html = `<div class=\"mb-12\">${georgianResult}</div>`;
-          if (translit) {
+          // Apply case suffix toggle to transliteration only (not to the fixed main name)
+          const processedTranslit = (() => {
+            if (!showCaseSuffix) return translit;
+            const t = (translit || "").trim();
+            if (!t) return translit;
+            const vowels = new Set(["ა", "ე", "ი", "ო", "უ"]);
+            return vowels.has(t[t.length - 1]) ? translit : `${t}-ი`;
+          })();
+          let html = `
+            <div class=\"mb-12\">
+              <div class=\"text-xs text-gray-500 mb-1\">ტრადიციულად დამკვიდრებული ფორმა</div>
+              <div>${georgianResult}</div>
+            </div>`;
+          if (processedTranslit) {
             html += `
               <div class=\"mt-3 border-t border-gray-200 pt-3\">
                 <div class=\"text-xs text-gray-500 mb-1\">${title}</div>
-                <div class=\"text-gray-800 space-y-1 text-sm\">${translit}</div>
+                <div class=\"text-gray-800 space-y-1 text-sm\">${processedTranslit}</div>
               </div>`;
           }
           output.innerHTML = html;
@@ -944,10 +982,21 @@
             otherGeo = groupedGeorgian.slice(1);
           }
 
+          const applyCase = (txt) => {
+            if (!showCaseSuffix) return txt;
+            // Append -ი if last non-space is not a vowel
+            const t = (txt || "").trim();
+            if (!t) return txt;
+            const vowels = new Set(["ა", "ე", "ი", "ო", "უ"]);
+            return vowels.has(t[t.length - 1]) ? txt : `${t}-ი`;
+          };
+
           if (otherGeo.length > 0) {
-            const listItems = otherGeo.map((g) => `<div>${g}</div>`).join("");
+            const listItems = otherGeo
+              .map((g) => `<div>${applyCase(g)}</div>`)
+              .join("");
             output.innerHTML = `
-              <div class="mb-12">${mainGeo}</div>
+              <div class="mb-12">${applyCase(mainGeo)}</div>
               <div class="mt-3 border-t border-gray-200 pt-3">
                 <div class="text-xs text-gray-500 mb-1 inline-flex items-center gap-1 group relative">ვარიანტები
                   <i class="fa-solid fa-circle-info text-gray-400 hover:text-gray-600"></i>
@@ -957,7 +1006,9 @@
               </div>
             `;
           } else {
-            output.innerHTML = `<div class=\"mb-2\">${mainGeo}</div>`;
+            output.innerHTML = `<div class=\"mb-2\">${applyCase(
+              mainGeo
+            )}</div>`;
           }
           output.className =
             "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
