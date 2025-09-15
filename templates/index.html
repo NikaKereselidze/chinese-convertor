@@ -20,33 +20,6 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <style>
-      .keyboard-btn {
-        @apply px-2 py-1 text-xs font-medium bg-white border-2 border-blue-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-400 transition-all duration-200 shadow-sm;
-        min-width: 28px;
-        min-height: 28px;
-        text-align: center;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-      }
-
-      .keyboard-btn:hover {
-        box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
-        transform: translateY(-1px);
-      }
-
-      .keyboard-btn:active {
-        @apply bg-blue-100 border-blue-400 transform scale-95;
-        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-      }
-
-      #keyboardContainer {
-        transition: transform 0.2s ease;
-      }
-
-      #keyboardContainer.dragging {
-        transition: none;
-      }
-    </style>
   </head>
   <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
@@ -110,169 +83,6 @@
       </div>
     </div>
 
-    <!-- Virtual Keyboard -->
-    <div
-      id="keyboardContainer"
-      class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 hidden bg-white rounded-lg shadow-xl max-w-md w-auto overflow-hidden cursor-move"
-      style="user-select: none"
-    >
-      <!-- Modal Header -->
-      <div
-        class="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50"
-      >
-        <h2 class="text-sm font-semibold text-gray-800 flex items-center">
-          <i class="fas fa-keyboard mr-1 text-blue-custom"></i>
-          ფინინის კლავიატურა
-        </h2>
-        <button
-          onclick="closeVirtualKeyboard()"
-          class="text-gray-400 hover:text-gray-600 p-1"
-        >
-          <i class="fas fa-times text-sm"></i>
-        </button>
-      </div>
-
-      <!-- Keyboard Content -->
-      <div class="p-2 bg-white">
-        <!-- Tone buttons organized by vowel groups -->
-        <div class="mb-2">
-          <div class="text-xs text-gray-600 mb-1">ტონები:</div>
-          <div class="grid grid-cols-6 gap-1">
-            <!-- A tones -->
-            <div class="flex flex-col gap-0.5">
-              <div class="text-xs text-gray-500 text-center mb-0.5 font-bold">
-                A
-              </div>
-              <button class="keyboard-btn" onclick="insertText('ā')">ā</button>
-              <button class="keyboard-btn" onclick="insertText('á')">á</button>
-              <button class="keyboard-btn" onclick="insertText('ǎ')">ǎ</button>
-              <button class="keyboard-btn" onclick="insertText('à')">à</button>
-              <button class="keyboard-btn" onclick="insertText('a')">a</button>
-            </div>
-
-            <!-- E tones -->
-            <div class="flex flex-col gap-0.5">
-              <div class="text-xs text-gray-500 text-center mb-0.5 font-bold">
-                E
-              </div>
-              <button class="keyboard-btn" onclick="insertText('ē')">ē</button>
-              <button class="keyboard-btn" onclick="insertText('é')">é</button>
-              <button class="keyboard-btn" onclick="insertText('ě')">ě</button>
-              <button class="keyboard-btn" onclick="insertText('è')">è</button>
-              <button class="keyboard-btn" onclick="insertText('e')">e</button>
-            </div>
-
-            <!-- I tones -->
-            <div class="flex flex-col gap-0.5">
-              <div class="text-xs text-gray-500 text-center mb-0.5 font-bold">
-                I
-              </div>
-              <button class="keyboard-btn" onclick="insertText('ī')">ī</button>
-              <button class="keyboard-btn" onclick="insertText('í')">í</button>
-              <button class="keyboard-btn" onclick="insertText('ǐ')">ǐ</button>
-              <button class="keyboard-btn" onclick="insertText('ì')">ì</button>
-              <button class="keyboard-btn" onclick="insertText('i')">i</button>
-            </div>
-
-            <!-- O tones -->
-            <div class="flex flex-col gap-0.5">
-              <div class="text-xs text-gray-500 text-center mb-0.5 font-bold">
-                O
-              </div>
-              <button class="keyboard-btn" onclick="insertText('ō')">ō</button>
-              <button class="keyboard-btn" onclick="insertText('ó')">ó</button>
-              <button class="keyboard-btn" onclick="insertText('ǒ')">ǒ</button>
-              <button class="keyboard-btn" onclick="insertText('ò')">ò</button>
-              <button class="keyboard-btn" onclick="insertText('o')">o</button>
-            </div>
-
-            <!-- U tones -->
-            <div class="flex flex-col gap-0.5">
-              <div class="text-xs text-gray-500 text-center mb-0.5 font-bold">
-                U
-              </div>
-              <button class="keyboard-btn" onclick="insertText('ū')">ū</button>
-              <button class="keyboard-btn" onclick="insertText('ú')">ú</button>
-              <button class="keyboard-btn" onclick="insertText('ǔ')">ǔ</button>
-              <button class="keyboard-btn" onclick="insertText('ù')">ù</button>
-              <button class="keyboard-btn" onclick="insertText('u')">u</button>
-            </div>
-
-            <!-- Ü tones -->
-            <div class="flex flex-col gap-0.5">
-              <div class="text-xs text-gray-500 text-center mb-0.5 font-bold">
-                Ü
-              </div>
-              <button class="keyboard-btn" onclick="insertText('ǖ')">ǖ</button>
-              <button class="keyboard-btn" onclick="insertText('ǘ')">ǘ</button>
-              <button class="keyboard-btn" onclick="insertText('ǚ')">ǚ</button>
-              <button class="keyboard-btn" onclick="insertText('ǜ')">ǜ</button>
-              <button class="keyboard-btn" onclick="insertText('ü')">ü</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Basic consonants and vowels -->
-        <!--
-         <div>
-           <div class="text-sm text-gray-600 mb-2">Basic Letters:</div>
-           <div class="flex flex-wrap gap-2">
-             <button class="keyboard-btn" onclick="insertText('b')">b</button>
-             <button class="keyboard-btn" onclick="insertText('p')">p</button>
-             <button class="keyboard-btn" onclick="insertText('m')">m</button>
-             <button class="keyboard-btn" onclick="insertText('f')">f</button>
-             <button class="keyboard-btn" onclick="insertText('d')">d</button>
-             <button class="keyboard-btn" onclick="insertText('t')">t</button>
-             <button class="keyboard-btn" onclick="insertText('n')">n</button>
-             <button class="keyboard-btn" onclick="insertText('l')">l</button>
-             <button class="keyboard-btn" onclick="insertText('g')">g</button>
-             <button class="keyboard-btn" onclick="insertText('k')">k</button>
-             <button class="keyboard-btn" onclick="insertText('h')">h</button>
-             <button class="keyboard-btn" onclick="insertText('j')">j</button>
-             <button class="keyboard-btn" onclick="insertText('q')">q</button>
-             <button class="keyboard-btn" onclick="insertText('x')">x</button>
-             <button class="keyboard-btn" onclick="insertText('z')">z</button>
-             <button class="keyboard-btn" onclick="insertText('c')">c</button>
-             <button class="keyboard-btn" onclick="insertText('s')">s</button>
-             <button class="keyboard-btn" onclick="insertText('r')">r</button>
-             <button class="keyboard-btn" onclick="insertText('y')">y</button>
-             <button class="keyboard-btn" onclick="insertText('w')">w</button>
-             <button class="keyboard-btn" onclick="insertText('a')">a</button>
-             <button class="keyboard-btn" onclick="insertText('o')">o</button>
-             <button class="keyboard-btn" onclick="insertText('e')">e</button>
-             <button class="keyboard-btn" onclick="insertText('i')">i</button>
-             <button class="keyboard-btn" onclick="insertText('u')">u</button>
-             <button class="keyboard-btn" onclick="insertText('ü')">ü</button>
-           </div>
-         </div>
-         -->
-
-        <!-- Special buttons -->
-        <div class="mt-2 pt-2 border-t border-gray-200">
-          <div class="flex gap-1">
-            <!-- <button
-              class="keyboard-btn bg-gray-100 text-xs"
-              onclick="insertText(' ')"
-            >
-              Space
-            </button> -->
-            <button
-              class="keyboard-btn bg-red-100 text-red-700 text-xs"
-              onclick="deleteLastChar()"
-            >
-              ⌫
-            </button>
-            <button
-              class="keyboard-btn bg-blue-100 text-blue-700 text-xs"
-              onclick="clearInput()"
-            >
-              გასუფთავება
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Main Content -->
     <main class="max-w-4xl mx-auto px-6 py-8">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -316,6 +126,242 @@
                 oninput="handleInput()"
                 onkeyup="updateCharCount()"
               ></textarea>
+            </div>
+
+            <div
+              id="keyboardContainer"
+              class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 hidden bg-white rounded-lg shadow-xl max-w-md w-auto overflow-hidden cursor-move"
+              style="user-select: none"
+            >
+              <!-- Modal Header -->
+              <div
+                class="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50"
+              >
+                <h2
+                  class="text-sm font-semibold text-gray-800 flex items-center"
+                >
+                  <i class="fas fa-keyboard mr-1 text-blue-custom"></i>
+                  ფინინის კლავიატურა
+                </h2>
+                <button
+                  onclick="closeVirtualKeyboard()"
+                  class="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <i class="fas fa-times text-sm"></i>
+                </button>
+              </div>
+
+              <!-- Keyboard Content -->
+              <div class="p-2 bg-white">
+                <!-- Tone buttons organized by vowel groups -->
+                <div class="mb-2">
+                  <div class="text-xs text-gray-600 mb-1">ტონები:</div>
+                  <div class="grid grid-cols-6 gap-1">
+                    <!-- A tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        A
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ā')">
+                        ā
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('á')">
+                        á
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǎ')">
+                        ǎ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('à')">
+                        à
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('a')">
+                        a
+                      </button>
+                    </div>
+
+                    <!-- E tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        E
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ē')">
+                        ē
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('é')">
+                        é
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ě')">
+                        ě
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('è')">
+                        è
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('e')">
+                        e
+                      </button>
+                    </div>
+
+                    <!-- I tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        I
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ī')">
+                        ī
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('í')">
+                        í
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǐ')">
+                        ǐ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ì')">
+                        ì
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('i')">
+                        i
+                      </button>
+                    </div>
+
+                    <!-- O tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        O
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ō')">
+                        ō
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ó')">
+                        ó
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǒ')">
+                        ǒ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ò')">
+                        ò
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('o')">
+                        o
+                      </button>
+                    </div>
+
+                    <!-- U tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        U
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ū')">
+                        ū
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ú')">
+                        ú
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǔ')">
+                        ǔ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ù')">
+                        ù
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('u')">
+                        u
+                      </button>
+                    </div>
+
+                    <!-- Ü tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        Ü
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ǖ')">
+                        ǖ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǘ')">
+                        ǘ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǚ')">
+                        ǚ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǜ')">
+                        ǜ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ü')">
+                        ü
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Basic consonants and vowels -->
+                <!--
+               <div>
+                 <div class="text-sm text-gray-600 mb-2">Basic Letters:</div>
+                 <div class="flex flex-wrap gap-2">
+                   <button class="keyboard-btn" onclick="insertText('b')">b</button>
+                   <button class="keyboard-btn" onclick="insertText('p')">p</button>
+                   <button class="keyboard-btn" onclick="insertText('m')">m</button>
+                   <button class="keyboard-btn" onclick="insertText('f')">f</button>
+                   <button class="keyboard-btn" onclick="insertText('d')">d</button>
+                   <button class="keyboard-btn" onclick="insertText('t')">t</button>
+                   <button class="keyboard-btn" onclick="insertText('n')">n</button>
+                   <button class="keyboard-btn" onclick="insertText('l')">l</button>
+                   <button class="keyboard-btn" onclick="insertText('g')">g</button>
+                   <button class="keyboard-btn" onclick="insertText('k')">k</button>
+                   <button class="keyboard-btn" onclick="insertText('h')">h</button>
+                   <button class="keyboard-btn" onclick="insertText('j')">j</button>
+                   <button class="keyboard-btn" onclick="insertText('q')">q</button>
+                   <button class="keyboard-btn" onclick="insertText('x')">x</button>
+                   <button class="keyboard-btn" onclick="insertText('z')">z</button>
+                   <button class="keyboard-btn" onclick="insertText('c')">c</button>
+                   <button class="keyboard-btn" onclick="insertText('s')">s</button>
+                   <button class="keyboard-btn" onclick="insertText('r')">r</button>
+                   <button class="keyboard-btn" onclick="insertText('y')">y</button>
+                   <button class="keyboard-btn" onclick="insertText('w')">w</button>
+                   <button class="keyboard-btn" onclick="insertText('a')">a</button>
+                   <button class="keyboard-btn" onclick="insertText('o')">o</button>
+                   <button class="keyboard-btn" onclick="insertText('e')">e</button>
+                   <button class="keyboard-btn" onclick="insertText('i')">i</button>
+                   <button class="keyboard-btn" onclick="insertText('u')">u</button>
+                   <button class="keyboard-btn" onclick="insertText('ü')">ü</button>
+                 </div>
+               </div>
+               -->
+
+                <!-- Special buttons -->
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                  <div class="flex gap-1">
+                    <!-- <button
+                    class="keyboard-btn bg-gray-100 text-xs"
+                    onclick="insertText(' ')"
+                  >
+                    Space
+                  </button> -->
+                    <button
+                      class="keyboard-btn bg-red-100 text-red-700 text-xs"
+                      onclick="deleteLastChar()"
+                    >
+                      ⌫
+                    </button>
+                    <button
+                      class="keyboard-btn bg-blue-100 text-blue-700 text-xs"
+                      onclick="clearInput()"
+                    >
+                      გასუფთავება
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- Pinyin Tag Display (below textarea with padding) -->
@@ -747,6 +793,33 @@
         }, 800); // Wait 800ms after user stops typing
       }
 
+      // Insert text at caret for the textarea
+      function insertAtCaret(el, text) {
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const value = el.value;
+        el.value = value.substring(0, start) + text + value.substring(end);
+        const newPos = start + text.length;
+        el.selectionStart = newPos;
+        el.selectionEnd = newPos;
+        el.focus();
+        handleInput();
+      }
+
+      // Pinyin keyboard click handling
+      (function attachPinyinKeyboard() {
+        const kb = document.getElementById("pinyinKeyboard");
+        const ta = document.getElementById("chineseInput");
+        if (!kb || !ta) return;
+        kb.addEventListener("click", function (e) {
+          const btn = e.target.closest("button[data-insert]");
+          if (!btn) return;
+          const ins = btn.getAttribute("data-insert") || "";
+          if (!ins) return;
+          insertAtCaret(ta, ins);
+        });
+      })();
+
       function convertText(text) {
         if (isTranslating) return;
 
@@ -817,6 +890,27 @@
         if (data.special) {
           georgianResult = data.special.ქართული;
           pinyinResult = data.special.pinyin;
+          // Render special cases: main special name, then pinyin transliteration section
+          const translit = data.special.translit_georgian || "";
+          const title = "ფინინის ტრანსლიტერაცია";
+          let html = `<div class=\"mb-12\">${georgianResult}</div>`;
+          if (translit) {
+            html += `
+              <div class=\"mt-3 border-t border-gray-200 pt-3\">
+                <div class=\"text-xs text-gray-500 mb-1\">${title}</div>
+                <div class=\"text-gray-800 space-y-1 text-sm\">${translit}</div>
+              </div>`;
+          }
+          output.innerHTML = html;
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+          // Update pinyin tag for special cases
+          updatePinyinTag(pinyinResult, [], []);
+          copyBtn.disabled = false;
+          shareBtn.disabled = false;
+          copyBtn.classList.remove("opacity-50");
+          shareBtn.classList.remove("opacity-50");
+          return; // Skip the normal rendering path
         } else {
           for (const [key, value] of Object.entries(data)) {
             if (value && typeof value === "object" && value.ქართული) {
@@ -1098,8 +1192,6 @@
           }
         });
 
-      // Fixed-height input; no auto-resize to keep counter pinned
-
       // Virtual Keyboard functionality
       let isDragging = false;
       let dragOffset = { x: 0, y: 0 };
@@ -1248,6 +1340,8 @@
           closeVirtualKeyboard();
         }
       });
+
+      // Fixed-height input; no auto-resize to keep counter pinned
     </script>
   </body>
 </html>

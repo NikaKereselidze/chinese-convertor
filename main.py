@@ -49,9 +49,6 @@ def get_georgian(pinyin_list):
 
     all_result = {}
     for pinyin in pinyin_list:
-        # Convert to lowercase for processing but keep original for result key
-        pinyin_lower = pinyin.lower()
-        
         # long replacements first
         replacements_long = {
             'ci': 'ც',
@@ -70,9 +67,9 @@ def get_georgian(pinyin_list):
             'ui': 'uei'
         }
         pattern = '|'.join(re.escape(char) for char in replacements_long.keys())
-        text_long = re.sub(pattern, lambda match: replacements_long[match.group()], pinyin_lower, flags=re.IGNORECASE)
+        text_long = re.sub(pattern, lambda match: replacements_long[match.group()], pinyin)
 
-        text_long = re.sub(r'(?<=[jqxy])u', 'iu', text_long, flags=re.IGNORECASE)
+        text_long = re.sub(r'(?<=[jqxy])u', 'iu', text_long)
         if 'iuan' in text_long and 'g' not in text_long[text_long.index('iuan')+3:]:
             text_long = text_long.replace('iuan', 'iuen')
         if 'ian' in text_long:
@@ -107,7 +104,7 @@ def get_georgian(pinyin_list):
             'ü': 'იუ'
         }
         pattern_short = '|'.join(re.escape(char) for char in replacements_short.keys())
-        text_short = re.sub(pattern_short, lambda match: replacements_short[match.group()], text_long, flags=re.IGNORECASE)
+        text_short = re.sub(pattern_short, lambda match: replacements_short[match.group()], text_long)
 
         text_short = text_short.replace(' ', '')
         pinyin_clean = pinyin.replace(' ', '')
@@ -132,6 +129,20 @@ def deduplicate_preserve_order(items):
             seen.add(item)
             result.append(item)
     return result
+
+
+def ensure_georgian_vowel_end(text: str) -> str:
+    """Append 'ი' if the Georgian transliteration does not end with a vowel.
+
+    Checks the last non-space character. Used for non-special cases only.
+    """
+    if not text:
+        return text
+    stripped = text.rstrip()
+    if not stripped:
+        return text
+    vowels = set('აეიოუ')
+    return stripped if stripped[-1] in vowels else stripped + '-ი'
 
 
 def group_tone_variants_by_base(pinyin_list):
@@ -256,7 +267,7 @@ def convert(data):
         if not text:
             return {'error': 'Please enter some text.\nგთხოვთ შეიყვანოთ ტექსტი.'}
 
-        # Special cases
+        # Special cases (fixed Georgian names)
         special_cases = {
             "北京": "პეკინი",
             "南京": "ნანკინი",
@@ -265,7 +276,7 @@ def convert(data):
             "澳门": "მაკაო",
             "西藏": "ტიბეტი",
             "乌鲁木齐": "ურუმჩი",
-            "孙中山": "სუნ იატსენი",
+            "中山孙": "სუნ იატსენი",
             "蒋介石": "ჩან კაიში",
             "李小龙": "ბრუს ლი",
             "成龙": "ჯეკი ჩანი",
@@ -273,25 +284,70 @@ def convert(data):
             "忽必烈": "ყუბილაი",
             "孔子": "კონფუცი",
         }
+        
+        # We compute pinyin dynamically for special cases; no static overrides needed.
 
         has_chinese = contains_cjk(text)
-    
 
-        # Special-case override
+        # If user typed Pinyin, check if it matches any special Chinese phrase
+        if not has_chinese:
+            normalized_input = remove_pinyin_tone_marks(text.lower())
+            normalized_input = re.sub(r"\s+", " ", normalized_input).strip()
+            compact_input = normalized_input.replace(" ", "")
+
+            matched_special = None
+            for zh_phrase, geo_name in special_cases.items():
+                # Build no-tone pinyin (single reading) for the special phrase
+                py_no_tone_syllables = pypinyin.pinyin(
+                    zh_phrase, style=pypinyin.Style.NORMAL, heteronym=False
+                )
+                py_no_tone = ' '.join(s[0] for s in py_no_tone_syllables if s and s[0]).lower()
+                py_no_tone_compact = py_no_tone.replace(' ', '')
+
+                if normalized_input == py_no_tone or compact_input == py_no_tone_compact:
+                    matched_special = zh_phrase
+                    break
+
+            if matched_special is not None:
+                # Choose pinyin to display (respect tone toggle)
+                style = pypinyin.Style.TONE if include_tones else pypinyin.Style.NORMAL
+                py_syllables = pypinyin.pinyin(matched_special, style=style, heteronym=False)
+                single_pinyin = ' '.join(s[0] for s in py_syllables if s and s[0])
+                if not include_tones:
+                    single_pinyin = remove_pinyin_tone_marks(single_pinyin)
+
+                translit_georgian = map_pinyin_to_georgian(remove_pinyin_tone_marks(single_pinyin))
+                translit_georgian = ensure_georgian_vowel_end(translit_georgian)
+
+                return {
+                    "special": {
+                        "pinyin": single_pinyin,
+                        "other_pinyin": [],
+                        "ქართული": special_cases[matched_special],
+                        "other_georgian": [],
+                        "translit_georgian": translit_georgian
+                    }
+                }
+
+        # Special-case override for Chinese input
         if text in special_cases:
-            # For special cases, show the predefined Georgian name and a single pinyin reading
+            # For special cases, show the predefined Georgian name and compute single pinyin
             style = pypinyin.Style.TONE if include_tones else pypinyin.Style.NORMAL
             py_syllables = pypinyin.pinyin(text, style=style, heteronym=False)
             single_pinyin = ' '.join(s[0] for s in py_syllables if s and s[0])
             if not include_tones:
                 single_pinyin = remove_pinyin_tone_marks(single_pinyin)
 
+            translit_georgian = map_pinyin_to_georgian(remove_pinyin_tone_marks(single_pinyin))
+            translit_georgian = ensure_georgian_vowel_end(translit_georgian)
+
             return {
                 "special": {
                     "pinyin": single_pinyin,
                     "other_pinyin": [],
                     "ქართული": special_cases[text],
-                    "other_georgian": []
+                    "other_georgian": [],
+                    "translit_georgian": translit_georgian
                 }
             }
 
@@ -316,18 +372,20 @@ def convert(data):
         if include_tones:
             # Use base_order so each group maps to a single Georgian variant
             georgian_variants = [map_pinyin_to_georgian(b) for b in base_order]
+            georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
         else:
             georgian_variants = [map_pinyin_to_georgian(v) for v in grouped_variants]
+            georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
 
         return {
             "ქართული": {
-                "pinyin": grouped_variants[0] if grouped_variants and has_chinese else "",
-                "other_pinyin": grouped_variants[1:] if len(grouped_variants) > 1 and has_chinese else [],
+                "pinyin": grouped_variants[0] if grouped_variants else "",
+                "other_pinyin": grouped_variants[1:] if len(grouped_variants) > 1 else [],
                 "ქართული": georgian_variants[0] if georgian_variants else "",
                 "other_georgian": georgian_variants[1:] if len(georgian_variants) > 1 else [],
-                "grouped_pinyin": grouped_variants if include_tones and has_chinese else None,
+                "grouped_pinyin": grouped_variants if include_tones else None,
                 "grouped_georgian": georgian_variants if include_tones else None
             }
         }
