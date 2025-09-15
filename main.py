@@ -117,6 +117,8 @@ def get_georgian(pinyin_list):
 def map_pinyin_to_georgian(pinyin_str):
     syllables = pinyin_str.strip().split()
     plain_syllables = [remove_pinyin_tone_marks(s) for s in syllables]
+    # Ensure case-insensitive mapping by lowercasing
+    plain_syllables = [s.lower() for s in plain_syllables]
     georgian_syllables = [get_georgian([s]).get(s, '') for s in plain_syllables]
     return ' '.join(georgian_syllables).strip()
 
