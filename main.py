@@ -193,6 +193,68 @@ def get_professional_pinyin(text, include_tones=False):
     return all_result
 
 
+# ---------------- Georgian script conversion ----------------
+GEORGIAN_MKHEDRULI_START = 0x10D0  # ა
+GEORGIAN_ASOMTAVRULI_START = 0x10A0  # Ⴀ
+GEORGIAN_NUSKHURI_START = 0x2D00  # ⴀ
+
+def is_mkhedruli(ch: str) -> bool:
+    cp = ord(ch)
+    return 0x10D0 <= cp <= 0x10FF
+
+def is_asomtavruli(ch: str) -> bool:
+    cp = ord(ch)
+    return 0x10A0 <= cp <= 0x10CF
+
+def is_nuskhuri(ch: str) -> bool:
+    cp = ord(ch)
+    return 0x2D00 <= cp <= 0x2D2F
+
+def convert_georgian_char(ch: str, target: str) -> str:
+    cp = ord(ch)
+    # Determine source base and index; assume aligned ordering across blocks
+    if is_mkhedruli(ch):
+        idx = cp - GEORGIAN_MKHEDRULI_START
+    elif is_asomtavruli(ch):
+        idx = cp - GEORGIAN_ASOMTAVRULI_START
+    elif is_nuskhuri(ch):
+        idx = cp - GEORGIAN_NUSKHURI_START
+    else:
+        return ch
+
+    # Some codepoints in these ranges are not letters; guard typical range
+    if idx < 0 or idx > 0x5F:
+        return ch
+
+    if target == 'mkhedruli':
+        return chr(GEORGIAN_MKHEDRULI_START + idx)
+    if target == 'asomtavruli':
+        return chr(GEORGIAN_ASOMTAVRULI_START + idx)
+    if target == 'nuskhuri':
+        return chr(GEORGIAN_NUSKHURI_START + idx)
+    return ch
+
+def detect_georgian_script(text: str) -> str | None:
+    for ch in text:
+        if is_mkhedruli(ch):
+            return 'mkhedruli'
+        if is_asomtavruli(ch):
+            return 'asomtavruli'
+        if is_nuskhuri(ch):
+            return 'nuskhuri'
+    return None
+
+def convert_georgian_scripts(text: str):
+    source = detect_georgian_script(text) or 'mkhedruli'
+    targets = [t for t in ['mkhedruli','asomtavruli','nuskhuri'] if t != source]
+    result = {}
+    for t in targets:
+        converted = ''.join(convert_georgian_char(ch, t) for ch in text)
+        result[f'to_{t}'] = converted
+    result['source'] = source
+    return result
+
+
 # ---------------- Polyphonic data loading ----------------
 def contains_cjk(text: str) -> bool:
     """Return True if any char is in common CJK ranges (incl. extensions)."""
@@ -266,6 +328,8 @@ def convert(data):
         text = data.get('text', '').strip()
         include_tones = bool(data.get('include_tones', False))
         show_case_suffix = bool(data.get('show_case_suffix', True))
+        input_language = data.get('input_language', 'chinese')
+        geo_target = data.get('geo_target')
 
         if not text:
             return {'error': 'Please enter some text.\nგთხოვთ შეიყვანოთ ტექსტი.'}
@@ -291,6 +355,26 @@ def convert(data):
         # We compute pinyin dynamically for special cases; no static overrides needed.
 
         has_chinese = contains_cjk(text)
+
+        # Georgian script conversion path (do not touch Chinese path)
+        if input_language in ('geo_to_mkhedruli','geo_to_asomtavruli','geo_to_nuskhuri') or input_language == 'georgian':
+            # Single-target conversion (legacy modes or unified georgian + geo_target)
+            if input_language == 'georgian':
+                target = geo_target if geo_target in ('mkhedruli','asomtavruli','nuskhuri') else 'mkhedruli'
+            else:
+                target = {
+                    'geo_to_mkhedruli': 'mkhedruli',
+                    'geo_to_asomtavruli': 'asomtavruli',
+                    'geo_to_nuskhuri': 'nuskhuri',
+                }[input_language]
+            source = detect_georgian_script(text) or 'mkhedruli'
+            converted = ''.join(convert_georgian_char(ch, target) for ch in text)
+            return {
+                "georgian_scripts": {
+                    "source": source,
+                    f"to_{target}": converted
+                }
+            }
 
         # If user typed Pinyin, check if it matches any special Chinese phrase
         if not has_chinese:
@@ -405,6 +489,11 @@ def convert(data):
 @app.route('/')
 def index():
     return render_template('index.html')
+
+
+@app.route('/newversionforgeorgian')
+def index_new_georgian():
+    return render_template('index-new.html')
 
 
 @app.route('/convert', methods=['POST', 'OPTIONS'])

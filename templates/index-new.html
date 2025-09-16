@@ -1,0 +1,1828 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ტრანსლიტერატორი</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "blue-custom": "#4285f4",
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* Larger size for Georgian keyboard keys only */
+      .geo-key {
+        height: 44px;
+        font-size: 15px;
+        /* Make keys expand evenly to fill row width */
+        flex: 1 1 0;
+        width: auto;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-custom text-white px-6 py-4">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white bg-opacity-20 p-2 rounded">
+            <i class="fas fa-language text-xl"></i>
+          </div>
+          <h1 class="text-xl font-medium">ტრანსლიტერატორი</h1>
+        </div>
+        <button
+          class="flex items-center space-x-2 bg-white bg-opacity-10 hover:bg-opacity-20 px-3 py-2 rounded transition-colors"
+          onclick="openHistoryModal()"
+        >
+          <i class="fas fa-history"></i>
+          <span>ისტორია</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- History Modal -->
+    <div
+      id="historyModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div
+          class="flex items-center justify-between p-4 border-b border-gray-200"
+        >
+          <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-history mr-2 text-blue-custom"></i>
+            ტრანსლიტერაციის ისტორია
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              onclick="clearHistory()"
+              class="text-red-500 hover:text-red-700 px-3 py-1 rounded text-sm font-medium transition-colors"
+            >
+              <i class="fas fa-trash mr-1"></i>
+              გასუფთავება
+            </button>
+            <button
+              onclick="closeHistoryModal()"
+              class="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="overflow-y-auto max-h-80">
+          <div id="historyContent" class="p-4">
+            <!-- History items will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Chinese Input Section -->
+        <div
+          class="bg-white rounded-lg shadow-sm border border-gray-200 relative"
+        >
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2 whitespace-nowrap">
+              <div class="relative">
+                <select
+                  id="inputLangSelect"
+                  class="h-8 pl-8 pr-6 text-xs border border-gray-300 rounded appearance-none bg-white"
+                >
+                  <option value="chinese" selected>ჩინური</option>
+                  <option value="georgian">ქართული</option>
+                  <option value="english">ინგლისური</option>
+                  <option value="latin">ლათინური</option>
+                </select>
+                <i
+                  class="fas fa-globe absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                ></i>
+                <i
+                  class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"
+                ></i>
+              </div>
+              <div id="geoTargetWrap" class="hidden relative w-40">
+                <select
+                  id="geoTargetSelect"
+                  class="h-8 w-full pl-8 pr-6 text-xs border border-gray-300 rounded appearance-none bg-white"
+                >
+                  <option value="mkhedruli" selected>მხედრული</option>
+                  <option value="asomtavruli">ასომთავრული</option>
+                  <option value="nuskhuri">ნუსხური</option>
+                </select>
+                <i
+                  class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                ></i>
+                <i
+                  class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"
+                ></i>
+              </div>
+            </div>
+            <div class="ml-auto flex items-center space-x-3 pr-2">
+              <button
+                id="keyboardBtn"
+                class="text-gray-500 hover:text-gray-700 transition-colors pr-2 -mb-1"
+                title="ფინინის კლავიატურა"
+                onclick="toggleVirtualKeyboard()"
+              >
+                <i class="fas fa-keyboard text-lg"></i>
+              </button>
+              <button
+                id="geoKeyboardBtn"
+                class="text-gray-500 hover:text-gray-700 transition-colors pr-2 -mb-1 hidden"
+                title="ქართული კლავიატურა"
+                onclick="toggleGeoKeyboard()"
+              >
+                <i class="fas fa-keyboard text-lg"></i>
+              </button>
+              <div id="tonesWrap" class="flex items-center space-x-2">
+                <label
+                  for="tonesToggle"
+                  class="text-xs text-gray-600 select-none"
+                  >ტონების ჩვენება</label
+                >
+                <input id="tonesToggle" type="checkbox" class="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+          <!-- Input Area -->
+          <div class="relative">
+            <!-- Fixed-height input wrapper -->
+            <div class="relative h-16">
+              <textarea
+                id="chineseInput"
+                class="absolute inset-0 w-full h-full p-4 text-lg resize-none border-none outline-none placeholder-gray-400"
+                placeholder="ჩაწერეთ ჩინური ტექსტი..."
+                maxlength="80"
+                oninput="handleInput()"
+                onkeyup="updateCharCount()"
+              ></textarea>
+            </div>
+
+            <div
+              id="keyboardContainer"
+              class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 hidden bg-white rounded-lg shadow-xl max-w-md w-auto overflow-hidden cursor-move"
+              style="user-select: none"
+            >
+              <!-- Modal Header -->
+              <div
+                class="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50"
+              >
+                <h2
+                  class="text-sm font-semibold text-gray-800 flex items-center"
+                >
+                  <i class="fas fa-keyboard mr-1 text-blue-custom"></i>
+                  ფინინის კლავიატურა
+                </h2>
+                <button
+                  onclick="closeVirtualKeyboard()"
+                  class="text-gray-400 hover:text-gray-600 p-1"
+                >
+                  <i class="fas fa-times text-sm"></i>
+                </button>
+              </div>
+
+              <!-- Keyboard Content -->
+              <div class="p-2 bg-white">
+                <!-- Tone buttons organized by vowel groups -->
+                <div class="mb-2">
+                  <div class="text-xs text-gray-600 mb-1">ტონები:</div>
+                  <div class="grid grid-cols-6 gap-1">
+                    <!-- A tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        A
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ā')">
+                        ā
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('á')">
+                        á
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǎ')">
+                        ǎ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('à')">
+                        à
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('a')">
+                        a
+                      </button>
+                    </div>
+
+                    <!-- E tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        E
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ē')">
+                        ē
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('é')">
+                        é
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ě')">
+                        ě
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('è')">
+                        è
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('e')">
+                        e
+                      </button>
+                    </div>
+
+                    <!-- I tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        I
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ī')">
+                        ī
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('í')">
+                        í
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǐ')">
+                        ǐ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ì')">
+                        ì
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('i')">
+                        i
+                      </button>
+                    </div>
+
+                    <!-- O tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        O
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ō')">
+                        ō
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ó')">
+                        ó
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǒ')">
+                        ǒ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ò')">
+                        ò
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('o')">
+                        o
+                      </button>
+                    </div>
+
+                    <!-- U tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        U
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ū')">
+                        ū
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ú')">
+                        ú
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǔ')">
+                        ǔ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ù')">
+                        ù
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('u')">
+                        u
+                      </button>
+                    </div>
+
+                    <!-- Ü tones -->
+                    <div class="flex flex-col gap-0.5">
+                      <div
+                        class="text-xs text-gray-500 text-center mb-0.5 font-bold"
+                      >
+                        Ü
+                      </div>
+                      <button class="keyboard-btn" onclick="insertText('ǖ')">
+                        ǖ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǘ')">
+                        ǘ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǚ')">
+                        ǚ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ǜ')">
+                        ǜ
+                      </button>
+                      <button class="keyboard-btn" onclick="insertText('ü')">
+                        ü
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Basic consonants and vowels -->
+                <!--
+               <div>
+                 <div class="text-sm text-gray-600 mb-2">Basic Letters:</div>
+                 <div class="flex flex-wrap gap-2">
+                   <button class="keyboard-btn" onclick="insertText('b')">b</button>
+                   <button class="keyboard-btn" onclick="insertText('p')">p</button>
+                   <button class="keyboard-btn" onclick="insertText('m')">m</button>
+                   <button class="keyboard-btn" onclick="insertText('f')">f</button>
+                   <button class="keyboard-btn" onclick="insertText('d')">d</button>
+                   <button class="keyboard-btn" onclick="insertText('t')">t</button>
+                   <button class="keyboard-btn" onclick="insertText('n')">n</button>
+                   <button class="keyboard-btn" onclick="insertText('l')">l</button>
+                   <button class="keyboard-btn" onclick="insertText('g')">g</button>
+                   <button class="keyboard-btn" onclick="insertText('k')">k</button>
+                   <button class="keyboard-btn" onclick="insertText('h')">h</button>
+                   <button class="keyboard-btn" onclick="insertText('j')">j</button>
+                   <button class="keyboard-btn" onclick="insertText('q')">q</button>
+                   <button class="keyboard-btn" onclick="insertText('x')">x</button>
+                   <button class="keyboard-btn" onclick="insertText('z')">z</button>
+                   <button class="keyboard-btn" onclick="insertText('c')">c</button>
+                   <button class="keyboard-btn" onclick="insertText('s')">s</button>
+                   <button class="keyboard-btn" onclick="insertText('r')">r</button>
+                   <button class="keyboard-btn" onclick="insertText('y')">y</button>
+                   <button class="keyboard-btn" onclick="insertText('w')">w</button>
+                   <button class="keyboard-btn" onclick="insertText('a')">a</button>
+                   <button class="keyboard-btn" onclick="insertText('o')">o</button>
+                   <button class="keyboard-btn" onclick="insertText('e')">e</button>
+                   <button class="keyboard-btn" onclick="insertText('i')">i</button>
+                   <button class="keyboard-btn" onclick="insertText('u')">u</button>
+                   <button class="keyboard-btn" onclick="insertText('ü')">ü</button>
+                 </div>
+               </div>
+               -->
+
+                <!-- Special buttons -->
+                <div class="mt-2 pt-2 border-t border-gray-200">
+                  <div class="flex gap-1">
+                    <!-- <button
+                    class="keyboard-btn bg-gray-100 text-xs"
+                    onclick="insertText(' ')"
+                  >
+                    Space
+                  </button> -->
+                    <button
+                      class="keyboard-btn bg-red-100 text-red-700 text-xs"
+                      onclick="deleteLastChar()"
+                    >
+                      ⌫
+                    </button>
+                    <button
+                      class="keyboard-btn bg-blue-100 text-blue-700 text-xs"
+                      onclick="clearInput()"
+                    >
+                      გასუფთავება
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pinyin Tag Display (below textarea with padding) -->
+            <div id="pinyinTag" class="hidden px-4 mt-0">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-gray-500">Pinyin:</span>
+                <span
+                  class="bg-blue-100 text-blue-800 text-lg px-2.5 py-0 rounded-full border border-blue-200 inline-flex items-center leading-none"
+                >
+                  <span class="font-mono leading-none" id="pinyinText"></span>
+                </span>
+              </div>
+            </div>
+            <!-- Pinyin Alternatives Section (with padding) -->
+            <div id="pinyinAltSection" class="hidden px-4">
+              <div class="mt-3 border-t border-gray-200 pt-3">
+                <div
+                  class="text-xs text-gray-500 mb-2 inline-flex items-center gap-1 group relative"
+                >
+                  ვარიანტები
+                  <i
+                    class="fa-solid fa-circle-info text-gray-400 hover:text-gray-600"
+                  ></i>
+                  <span
+                    class="absolute left-0 top-0 -translate-y-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 shadow whitespace-nowrap z-10"
+                    >ვარიანტები დალაგებულია სიხშირის მიხედვით</span
+                  >
+                </div>
+                <div
+                  id="pinyinAltList"
+                  class="text-sm text-gray-800 space-y-1"
+                ></div>
+              </div>
+            </div>
+          </div>
+          <!-- Counter positioned at the card's bottom-right corner (child of card) -->
+          <div
+            id="charCounter"
+            class="absolute bottom-2 right-3 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded pointer-events-none z-20"
+          >
+            0 / 80
+          </div>
+        </div>
+
+        <!-- Georgian Output Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2 whitespace-nowrap">
+              <span class="font-medium text-gray-700">ქართული</span>
+              <div id="geoTargetWrapRight" class="hidden relative w-40 ml-2">
+                <select
+                  id="geoTargetSelectRight"
+                  class="h-8 w-full pl-8 pr-6 text-xs border border-gray-300 rounded appearance-none bg-white"
+                >
+                  <option value="mkhedruli" selected>მხედრული</option>
+                  <option value="asomtavruli">ასომთავრული</option>
+                  <option value="nuskhuri">ნუსხური</option>
+                </select>
+                <i
+                  class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                ></i>
+                <i
+                  class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"
+                ></i>
+              </div>
+            </div>
+            <div id="caseWrap" class="ml-auto flex items-center space-x-2">
+              <label for="caseToggle" class="text-xs text-gray-600 select-none"
+                >ბრუნვის ნიშნის ჩვენება</label
+              >
+              <input id="caseToggle" type="checkbox" class="h-4 w-4" />
+            </div>
+          </div>
+
+          <!-- Output Area -->
+          <div class="relative">
+            <div
+              id="georgianOutput"
+              class="w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto"
+            >
+              ტრანსლიტერაცია გამოჩნდება აქ...
+            </div>
+
+            <!-- Bottom Controls -->
+            <div
+              class="flex items-center justify-between p-4 border-t border-gray-100"
+            >
+              <div class="text-sm text-gray-500">
+                <!-- Empty space for alignment -->
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  id="copyBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Copy"
+                  disabled
+                >
+                  <i class="fas fa-copy text-lg"></i>
+                </button>
+                <button
+                  id="shareBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Share"
+                  disabled
+                >
+                  <i class="fas fa-share text-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Credits -->
+      <footer class="text-center text-sm text-gray-500 mt-8">
+        შექმნილია <span class="text-red-500">❤</span> სსიპ სახელმწიფო ენის
+        დეპარტამენტის © მიერ 2025
+        <div class="mt-2 space-x-4">
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონფიდენციალურობა</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >წესები</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონტაქტი</a
+          >
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      let isTranslating = false;
+      let debounceTimer = null;
+      let currentMode = "chinese";
+      let includeTones = false;
+      let showCaseSuffix = true;
+      let inputLanguage = "chinese";
+      let geoTarget = null; // mkhedruli | asomtavruli | nuskhuri
+
+      // Restore persisted preferences
+      (function restorePrefs() {
+        try {
+          const savedLang = localStorage.getItem("pref.inputLanguage");
+          const savedGeo = localStorage.getItem("pref.geoTarget");
+          const savedTones = localStorage.getItem("pref.tonesOn");
+          const savedCase = localStorage.getItem("pref.caseOn");
+
+          const langEl = document.getElementById("inputLangSelect");
+          const geoWrap = document.getElementById("geoTargetWrap");
+          const geoWrapRight = document.getElementById("geoTargetWrapRight");
+          const geoSel = document.getElementById("geoTargetSelect");
+          const geoSelRight = document.getElementById("geoTargetSelectRight");
+          const tonesEl = document.getElementById("tonesToggle");
+          const caseEl = document.getElementById("caseToggle");
+          const tonesWrap = document.getElementById("tonesWrap");
+          const caseWrap = document.getElementById("caseWrap");
+          const gkb = document.getElementById("geoKeyboardBtn");
+
+          if (langEl && savedLang) {
+            langEl.value = savedLang;
+            inputLanguage = savedLang;
+          }
+          if (geoSel && savedGeo) {
+            geoSel.value = savedGeo;
+            geoTarget = savedGeo;
+          }
+          if (geoSelRight && savedGeo) {
+            geoSelRight.value = savedGeo;
+          }
+          if (typeof savedTones === "string" && tonesEl) {
+            includeTones = savedTones === "true";
+            tonesEl.checked = includeTones;
+          }
+          if (typeof savedCase === "string" && caseEl) {
+            showCaseSuffix = savedCase === "true";
+            caseEl.checked = showCaseSuffix;
+          }
+
+          // Apply visibility based on restored language
+          const input = document.getElementById("chineseInput");
+          if (inputLanguage === "georgian") {
+            if (geoWrap) geoWrap.classList.remove("hidden");
+            if (geoWrapRight) geoWrapRight.classList.remove("hidden");
+            if (tonesWrap) tonesWrap.classList.add("invisible");
+            if (caseWrap) caseWrap.classList.add("invisible");
+            if (gkb) gkb.classList.remove("hidden");
+            const pykb = document.getElementById("keyboardBtn");
+            if (pykb) pykb.classList.add("hidden");
+            if (input) input.placeholder = "ჩაწერეთ ქართული ტექსტი...";
+          } else {
+            if (geoWrap) geoWrap.classList.add("hidden");
+            if (geoWrapRight) geoWrapRight.classList.add("hidden");
+            if (tonesWrap) tonesWrap.classList.remove("invisible");
+            if (caseWrap) caseWrap.classList.remove("invisible");
+            if (gkb) gkb.classList.add("hidden");
+            const pykb = document.getElementById("keyboardBtn");
+            if (pykb) pykb.classList.remove("hidden");
+            if (input) input.placeholder = "ჩაწერეთ ჩინური ტექსტი...";
+          }
+
+          // Ensure keyboard reflects script
+          renderGeoKeys();
+        } catch (e) {
+          console.warn("Prefs restore failed", e);
+        }
+      })();
+
+      // Tones toggle listener
+      const tonesEl = document.getElementById("tonesToggle");
+      if (tonesEl) {
+        tonesEl.addEventListener("change", function () {
+          includeTones = this.checked;
+          localStorage.setItem("pref.tonesOn", includeTones ? "true" : "false");
+          const val = document.getElementById("chineseInput").value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
+        });
+      }
+
+      // Input language select
+      const langEl = document.getElementById("inputLangSelect");
+      if (langEl) {
+        langEl.addEventListener("change", function () {
+          inputLanguage = this.value;
+          localStorage.setItem("pref.inputLanguage", inputLanguage);
+          const geoWrap = document.getElementById("geoTargetWrap");
+          const geoSel = document.getElementById("geoTargetSelect");
+          const tonesWrap = document.getElementById("tonesWrap");
+          const caseWrap = document.getElementById("caseWrap");
+          geoTarget = null;
+          if (inputLanguage === "georgian") {
+            geoWrap.classList.remove("hidden");
+            document
+              .getElementById("geoTargetWrapRight")
+              .classList.remove("hidden");
+            geoTarget = geoSel.value;
+            // Hide Chinese-only controls
+            if (tonesWrap) tonesWrap.classList.add("invisible");
+            if (caseWrap) caseWrap.classList.add("invisible");
+            // Show Georgian keyboard button
+            const gkb = document.getElementById("geoKeyboardBtn");
+            if (gkb) gkb.classList.remove("hidden");
+            const pykb = document.getElementById("keyboardBtn");
+            if (pykb) pykb.classList.add("hidden");
+            renderGeoKeys();
+          } else {
+            geoWrap.classList.add("hidden");
+            document
+              .getElementById("geoTargetWrapRight")
+              .classList.add("hidden");
+            // Show Chinese controls back when Chinese mode
+            if (tonesWrap) tonesWrap.classList.remove("invisible");
+            if (caseWrap) caseWrap.classList.remove("invisible");
+            // Hide Georgian keyboard button
+            const gkb = document.getElementById("geoKeyboardBtn");
+            if (gkb) gkb.classList.add("hidden");
+            const pykb = document.getElementById("keyboardBtn");
+            if (pykb) pykb.classList.remove("hidden");
+            renderGeoKeys();
+          }
+          // Update placeholder per language
+          const input = document.getElementById("chineseInput");
+          switch (inputLanguage) {
+            case "chinese":
+              input.placeholder = "ჩაწერეთ ჩინური ტექსტი...";
+              break;
+            case "georgian":
+              input.placeholder = "ჩაწერეთ ქართული ტექსტი...";
+              break;
+            case "english":
+              input.placeholder = "Type English text...";
+              break;
+            case "latin":
+              input.placeholder = "Type Latin text...";
+              break;
+          }
+          // Re-run if there is content
+          const val = input.value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
+        });
+        // Listen to secondary target select
+        const geoSel = document.getElementById("geoTargetSelect");
+        const geoSelRight = document.getElementById("geoTargetSelectRight");
+        if (geoSel) {
+          geoSel.addEventListener("change", function () {
+            if (inputLanguage === "georgian") {
+              geoTarget = this.value;
+              localStorage.setItem("pref.geoTarget", geoTarget);
+              const val = document.getElementById("chineseInput").value.trim();
+              if (val) {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                convertText(val);
+              }
+              renderGeoKeys();
+            }
+          });
+        }
+        if (geoSelRight) {
+          geoSelRight.addEventListener("change", function () {
+            if (inputLanguage === "georgian") {
+              geoTarget = this.value;
+              localStorage.setItem("pref.geoTarget", geoTarget);
+              const val = document.getElementById("chineseInput").value.trim();
+              if (val) {
+                if (debounceTimer) clearTimeout(debounceTimer);
+                convertText(val);
+              }
+              renderGeoKeys();
+            }
+          });
+        }
+      }
+
+      // Case suffix toggle listener
+      const caseEl = document.getElementById("caseToggle");
+      if (caseEl) {
+        caseEl.addEventListener("change", function () {
+          showCaseSuffix = this.checked;
+          localStorage.setItem(
+            "pref.caseOn",
+            showCaseSuffix ? "true" : "false"
+          );
+          const val = document.getElementById("chineseInput").value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
+        });
+        // Default ON as requested behavior
+        caseEl.checked = true;
+      }
+
+      // Mode switching functionality
+      function setMode(mode) {
+        currentMode = mode;
+        const input = document.getElementById("chineseInput");
+        const chineseBtn = document.getElementById("chineseMode");
+        const pinyinBtn = document.getElementById("pinyinMode");
+
+        if (mode === "chinese") {
+          // Update buttons
+          chineseBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors bg-blue-custom text-white";
+          pinyinBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-800";
+
+          // Update placeholder
+          input.placeholder = "Type or paste Chinese text...";
+        } else {
+          // Update buttons
+          pinyinBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors bg-blue-custom text-white";
+          chineseBtn.className =
+            "flex-1 py-2 px-3 text-sm font-medium rounded-md transition-colors text-gray-600 hover:text-gray-800";
+
+          // Update placeholder
+          input.placeholder = "Type pinyin (e.g., beijing, shanghai)...";
+        }
+
+        // Clear current input and output
+        input.value = "";
+        updateCharCount();
+        const output = document.getElementById("georgianOutput");
+        output.textContent = "ტრანსლიტერაცია გამოჩნდება აქ...";
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+
+        // Hide pinyin tag when switching modes
+        document.getElementById("pinyinTag").classList.add("hidden");
+
+        // Disable buttons
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        copyBtn.disabled = true;
+        shareBtn.disabled = true;
+        copyBtn.classList.add("opacity-50");
+        shareBtn.classList.add("opacity-50");
+      }
+
+      // History management
+      function saveToHistory(chineseText, georgianText, pinyinText) {
+        const historyItem = {
+          id: Date.now(),
+          chinese: chineseText,
+          georgian: georgianText,
+          pinyin: pinyinText,
+          timestamp: new Date().toISOString(),
+        };
+
+        let history = getHistory();
+
+        // Check if this exact translation already exists
+        const existingIndex = history.findIndex(
+          (item) =>
+            item.chinese === chineseText && item.georgian === georgianText
+        );
+
+        if (existingIndex !== -1) {
+          // Remove existing and add to top
+          history.splice(existingIndex, 1);
+        }
+
+        // Add to beginning of array
+        history.unshift(historyItem);
+
+        // Keep only last 50 translations
+        if (history.length > 50) {
+          history = history.slice(0, 50);
+        }
+
+        localStorage.setItem("translationHistory", JSON.stringify(history));
+      }
+
+      function getHistory() {
+        try {
+          const stored = localStorage.getItem("translationHistory");
+          return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+          console.error("Error reading history:", error);
+          return [];
+        }
+      }
+
+      function clearHistory() {
+        if (
+          confirm("Are you sure you want to clear all translation history?")
+        ) {
+          localStorage.removeItem("translationHistory");
+          renderHistory();
+        }
+      }
+
+      function openHistoryModal() {
+        document.getElementById("historyModal").classList.remove("hidden");
+        renderHistory();
+        document.body.style.overflow = "hidden"; // Prevent background scrolling
+      }
+
+      function closeHistoryModal() {
+        document.getElementById("historyModal").classList.add("hidden");
+        document.body.style.overflow = "auto"; // Re-enable scrolling
+      }
+
+      function renderHistory() {
+        const historyContent = document.getElementById("historyContent");
+        const history = getHistory();
+
+        if (history.length === 0) {
+          historyContent.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+              <i class="fas fa-history text-4xl mb-4 opacity-50"></i>
+              <p class="text-lg">No translation history yet</p>
+              <p class="text-sm">Start translating to build your history</p>
+            </div>
+          `;
+          return;
+        }
+
+        const historyHTML = history
+          .map((item) => {
+            const date = new Date(item.timestamp);
+            const timeAgo = getTimeAgo(date);
+
+            return `
+            <div class="border border-gray-200 rounded-lg p-4 mb-3 hover:bg-gray-50 transition-colors cursor-pointer" onclick="useHistoryItem('${item.chinese.replace(
+              /'/g,
+              "\\'"
+            )}', '${item.georgian.replace(/'/g, "\\'")}', '${(
+              item.pinyin || ""
+            ).replace(/'/g, "\\'")}')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs text-gray-500">${timeAgo}</span>
+                <button onclick="event.stopPropagation(); deleteHistoryItem(${
+                  item.id
+                })" class="text-red-400 hover:text-red-600 p-1">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ჩინური:</span>
+                  <p class="text-gray-800 font-medium">${item.chinese}</p>
+                </div>
+                ${
+                  item.pinyin
+                    ? `
+                  <div>
+                    <span class="text-xs font-medium text-blue-600 uppercase tracking-wide">ფინინი:</span>
+                    <p class="text-blue-700 font-mono">/${item.pinyin}/</p>
+                  </div>
+                `
+                    : ""
+                }
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ქართული:</span>
+                  <p class="text-gray-700">${item.georgian}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+
+        historyContent.innerHTML = historyHTML;
+      }
+
+      function deleteHistoryItem(id) {
+        let history = getHistory();
+        history = history.filter((item) => item.id !== id);
+        localStorage.setItem("translationHistory", JSON.stringify(history));
+        renderHistory();
+      }
+
+      function useHistoryItem(chineseText, georgianText, pinyinText) {
+        // Fill the input with the selected translation
+        document.getElementById("chineseInput").value = chineseText;
+
+        // Update the output with only Georgian
+        const output = document.getElementById("georgianOutput");
+        output.textContent = georgianText;
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+        // Show pinyin tag if in Chinese mode and pinyin exists
+        if (currentMode === "chinese" && pinyinText) {
+          updatePinyinTag(pinyinText);
+        } else {
+          document.getElementById("pinyinTag").classList.add("hidden");
+        }
+
+        // Enable buttons
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        copyBtn.disabled = false;
+        shareBtn.disabled = false;
+        copyBtn.classList.remove("opacity-50");
+        shareBtn.classList.remove("opacity-50");
+
+        // Update character count
+        updateCharCount();
+
+        // Close modal
+        closeHistoryModal();
+      }
+
+      function getTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return "Just now";
+        if (diffInSeconds < 3600)
+          return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400)
+          return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000)
+          return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+        return date.toLocaleDateString();
+      }
+
+      // Close modal when clicking outside
+      document.addEventListener("click", function (event) {
+        const modal = document.getElementById("historyModal");
+        if (event.target === modal) {
+          closeHistoryModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeHistoryModal();
+        }
+      });
+
+      function updateCharCount() {
+        const input = document.getElementById("chineseInput");
+        const charCount = document.getElementById("charCount");
+        const charCounter = document.getElementById("charCounter");
+        const len = input.value.length;
+        if (charCount) charCount.textContent = len;
+        if (charCounter) charCounter.textContent = `${len} / 80`;
+      }
+
+      function handleInput() {
+        updateCharCount();
+
+        const input = document.getElementById("chineseInput").value.trim();
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+
+        // Clear any existing timer
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        if (!input) {
+          output.textContent = "ტრანსლიტერაცია გამოჩნდება აქ...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          // Hide and clear pinyin UI when input is empty
+          const pinyinTag = document.getElementById("pinyinTag");
+          const pinyinTextElement = document.getElementById("pinyinText");
+          const pinyinAltSection = document.getElementById("pinyinAltSection");
+          const pinyinAltList = document.getElementById("pinyinAltList");
+          if (pinyinTag) pinyinTag.classList.add("hidden");
+          if (pinyinTextElement) pinyinTextElement.textContent = "";
+          if (pinyinAltSection) pinyinAltSection.classList.add("hidden");
+          if (pinyinAltList) pinyinAltList.innerHTML = "";
+          return;
+        }
+
+        // Show "typing..." immediately for visual feedback
+        if (!isTranslating) {
+          output.textContent = "Typing...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+        }
+
+        // Set a new timer to translate after user stops typing
+        debounceTimer = setTimeout(() => {
+          if (!isTranslating) {
+            convertText(input);
+          }
+        }, 800); // Wait 800ms after user stops typing
+      }
+
+      // Insert text at caret for the textarea
+      function insertAtCaret(el, text) {
+        const start = el.selectionStart;
+        const end = el.selectionEnd;
+        const value = el.value;
+        el.value = value.substring(0, start) + text + value.substring(end);
+        const newPos = start + text.length;
+        el.selectionStart = newPos;
+        el.selectionEnd = newPos;
+        el.focus();
+        handleInput();
+      }
+
+      // Pinyin keyboard click handling
+      (function attachPinyinKeyboard() {
+        const kb = document.getElementById("pinyinKeyboard");
+        const ta = document.getElementById("chineseInput");
+        if (!kb || !ta) return;
+        kb.addEventListener("click", function (e) {
+          const btn = e.target.closest("button[data-insert]");
+          if (!btn) return;
+          const ins = btn.getAttribute("data-insert") || "";
+          if (!ins) return;
+          insertAtCaret(ta, ins);
+        });
+      })();
+
+      function convertText(text) {
+        if (isTranslating) return;
+
+        isTranslating = true;
+        const output = document.getElementById("georgianOutput");
+
+        output.textContent = "Translating...";
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+
+        const payload = {
+          text: text,
+          include_tones: includeTones,
+          show_case_suffix: showCaseSuffix,
+          input_language: inputLanguage,
+          geo_target: geoTarget,
+        };
+
+        fetch("/convert", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            displayResult(data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            const output = document.getElementById("georgianOutput");
+            output.textContent = "Translation error. Please try again.";
+            output.className =
+              "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          })
+          .finally(() => {
+            isTranslating = false;
+          });
+      }
+
+      function displayResult(data) {
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        const input = document.getElementById("chineseInput");
+        // Reset other pinyin/georgian between renders to avoid stale values
+        window.__otherPinyin = [];
+        window.__otherGeorgian = [];
+
+        if (data.error) {
+          output.textContent = data.error;
+          output.className =
+            "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          // Hide pinyin tag on error
+          document.getElementById("pinyinTag").classList.add("hidden");
+          return;
+        }
+
+        // Georgian script conversion handling (render only target from dropdown)
+        if (data.georgian_scripts) {
+          const rightSel = document.getElementById("geoTargetSelectRight");
+          const leftSel = document.getElementById("geoTargetSelect");
+          const activeTarget =
+            (rightSel && rightSel.value) ||
+            (leftSel && leftSel.value) ||
+            "mkhedruli";
+          const key = `to_${activeTarget}`;
+          const converted = data.georgian_scripts[key] || "";
+          const html = `<div class=\"text-gray-900\">${converted}</div>`;
+          output.innerHTML = html;
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+          // Hide pinyin UI in Georgian mode
+          document.getElementById("pinyinTag").classList.add("hidden");
+          document.getElementById("pinyinAltSection").classList.add("hidden");
+          return;
+        }
+
+        let georgianResult = "";
+        let pinyinResult = "";
+        let groupedPinyin = null;
+        let groupedGeorgian = null;
+
+        if (data.special) {
+          georgianResult = data.special.ქართული;
+          pinyinResult = data.special.pinyin;
+          // Render special cases: labeled main name, then pinyin transliteration section
+          const translit = data.special.translit_georgian || "";
+          const title = "ფინინის ტრანსლიტერაცია";
+          // Apply case suffix toggle to transliteration only (not to the fixed main name)
+          const processedTranslit = (() => {
+            if (!showCaseSuffix) return translit;
+            const t = (translit || "").trim();
+            if (!t) return translit;
+            const vowels = new Set(["ა", "ე", "ი", "ო", "უ"]);
+            return vowels.has(t[t.length - 1]) ? translit : `${t}-ი`;
+          })();
+          let html = `
+            <div class=\"mb-12\">
+              <div class=\"text-xs text-gray-500 mb-1\">ტრადიციულად დამკვიდრებული ფორმა</div>
+              <div>${georgianResult}</div>
+            </div>`;
+          if (processedTranslit) {
+            html += `
+              <div class=\"mt-3 border-t border-gray-200 pt-3\">
+                <div class=\"text-xs text-gray-500 mb-1\">${title}</div>
+                <div class=\"text-gray-800 space-y-1 text-sm\">${processedTranslit}</div>
+              </div>`;
+          }
+          output.innerHTML = html;
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+          // Update pinyin tag for special cases
+          updatePinyinTag(pinyinResult, [], []);
+          copyBtn.disabled = false;
+          shareBtn.disabled = false;
+          copyBtn.classList.remove("opacity-50");
+          shareBtn.classList.remove("opacity-50");
+          return; // Skip the normal rendering path
+        } else {
+          for (const [key, value] of Object.entries(data)) {
+            if (value && typeof value === "object" && value.ქართული) {
+              georgianResult = value.ქართული;
+              pinyinResult = value.pinyin;
+              window.__otherPinyin = Array.isArray(value.other_pinyin)
+                ? value.other_pinyin
+                : [];
+              window.__otherGeorgian = Array.isArray(value.other_georgian)
+                ? value.other_georgian
+                : [];
+              groupedPinyin = Array.isArray(value.grouped_pinyin)
+                ? value.grouped_pinyin
+                : null;
+              groupedGeorgian = Array.isArray(value.grouped_georgian)
+                ? value.grouped_georgian
+                : null;
+              break;
+            }
+          }
+        }
+
+        if (georgianResult) {
+          // Prefer grouped outputs when tones are enabled
+          let mainGeo = georgianResult;
+          let otherGeo = (window.__otherGeorgian || []).filter(
+            (g) => g && g.trim()
+          );
+          if (includeTones && groupedGeorgian && groupedGeorgian.length > 0) {
+            mainGeo = groupedGeorgian[0];
+            otherGeo = groupedGeorgian.slice(1);
+          }
+
+          const applyCase = (txt) => {
+            if (!showCaseSuffix) return txt;
+            // Append -ი if last non-space is not a vowel
+            const t = (txt || "").trim();
+            if (!t) return txt;
+            const vowels = new Set(["ა", "ე", "ი", "ო", "უ"]);
+            return vowels.has(t[t.length - 1]) ? txt : `${t}-ი`;
+          };
+
+          if (otherGeo.length > 0) {
+            const listItems = otherGeo
+              .map((g) => `<div>${applyCase(g)}</div>`)
+              .join("");
+            output.innerHTML = `
+              <div class="mb-12">${applyCase(mainGeo)}</div>
+              <div class="mt-3 border-t border-gray-200 pt-3">
+                <div class="text-xs text-gray-500 mb-1 inline-flex items-center gap-1 group relative">ვარიანტები
+                  <i class="fa-solid fa-circle-info text-gray-400 hover:text-gray-600"></i>
+                  <span class="absolute left-0 top-0 -translate-y-full mb-1 hidden group-hover:block bg-gray-800 text-white text-xs rounded px-2 py-1 shadow whitespace-nowrap z-10">ვარიანტები დალაგებულია სიხშირის მიხედვით</span>
+                </div>
+                <div class="text-gray-800 space-y-1 text-sm">${listItems}</div>
+              </div>
+            `;
+          } else {
+            output.innerHTML = `<div class=\"mb-2\">${applyCase(
+              mainGeo
+            )}</div>`;
+          }
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+          // Show pinyin as a tag below the input (only in Chinese mode)
+          if (currentMode === "chinese" && pinyinResult) {
+            let mainPin = pinyinResult;
+            let otherPin = window.__otherPinyin || [];
+            if (includeTones && groupedPinyin && groupedPinyin.length > 0) {
+              mainPin = groupedPinyin[0];
+              otherPin = groupedPinyin.slice(1);
+            }
+            updatePinyinTag(mainPin, otherPin, window.__otherGeorgian || []);
+          } else {
+            document.getElementById("pinyinTag").classList.add("hidden");
+            document.getElementById("pinyinAltSection").classList.add("hidden");
+          }
+
+          copyBtn.disabled = false;
+          shareBtn.disabled = false;
+          copyBtn.classList.remove("opacity-50");
+          shareBtn.classList.remove("opacity-50");
+
+          // Save to history
+          const chineseText = input.value.trim();
+          const historyText = output.textContent.trim();
+          if (chineseText && historyText) {
+            saveToHistory(chineseText, historyText, pinyinResult);
+          }
+        } else {
+          output.textContent = "No translation available.";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          // Hide pinyin tag when no result
+          document.getElementById("pinyinTag").classList.add("hidden");
+        }
+      }
+
+      function updatePinyinTag(pinyinText, otherList, otherGeorgian) {
+        const pinyinTag = document.getElementById("pinyinTag");
+        const pinyinTextElement = document.getElementById("pinyinText");
+        const pinyinAltSection = document.getElementById("pinyinAltSection");
+        const pinyinAltList = document.getElementById("pinyinAltList");
+
+        if (pinyinText) {
+          // Format main pinyin: if grouped (comma-separated), wrap each with its own slashes
+          if (typeof pinyinText === "string" && pinyinText.includes(",")) {
+            const parts = pinyinText
+              .split(",")
+              .map((s) => s.trim())
+              .filter(Boolean);
+            pinyinTextElement.textContent = parts
+              .map((s) => `/${s}/`)
+              .join(", ");
+          } else {
+            pinyinTextElement.textContent = `/${pinyinText}/`;
+          }
+          // Render other readings aligned to Georgian list
+          if (Array.isArray(otherList) && otherList.length > 0) {
+            const rows = otherList.map((p, i) => {
+              const g = (otherGeorgian || [])[i] || "";
+              let displayPinyin = p;
+              if (typeof p === "string" && p.includes(",")) {
+                const parts = p
+                  .split(",")
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+                displayPinyin = parts.map((s) => `/${s}/`).join(", ");
+              } else {
+                displayPinyin = `/${p}/`;
+              }
+              return (
+                `<div class=\"grid grid-cols-2 gap-3\">` +
+                `<div class=\"font-mono text-blue-800\">${displayPinyin}</div>` +
+                `<div class=\"invisible\">${g}</div>` +
+                `</div>`
+              );
+            });
+            pinyinAltList.innerHTML = rows.join("");
+            pinyinAltSection.classList.remove("hidden");
+          } else {
+            pinyinAltSection.classList.add("hidden");
+            pinyinAltList.innerHTML = "";
+          }
+          pinyinTag.classList.remove("hidden");
+        } else {
+          pinyinTag.classList.add("hidden");
+          pinyinAltSection.classList.add("hidden");
+          pinyinAltList.innerHTML = "";
+        }
+      }
+
+      // Copy functionality
+      document
+        .getElementById("copyBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          if (
+            output.textContent &&
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ")
+          ) {
+            try {
+              // Copy Georgian text directly
+              const textToCopy = output.textContent.trim();
+
+              // Try modern clipboard API first
+              if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(textToCopy);
+              } else {
+                // Fallback for older browsers or non-HTTPS
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand("copy");
+                textArea.remove();
+              }
+
+              // Show success feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-green-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Copy failed:", error);
+
+              // Show error feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Share functionality
+      document
+        .getElementById("shareBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          const input = document.getElementById("chineseInput");
+
+          if (
+            output.textContent &&
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ...")
+          ) {
+            // Get Georgian text directly
+            const georgianText = output.textContent.trim();
+
+            // Get pinyin from tag if visible
+            const pinyinTag = document.getElementById("pinyinTag");
+            const pinyinElement = document.getElementById("pinyinText");
+            const pinyinText = !pinyinTag.classList.contains("hidden")
+              ? pinyinElement.textContent.trim()
+              : "";
+
+            let shareText = `Chinese: ${input.value}`;
+            if (pinyinText) {
+              shareText += `\nPinyin: ${pinyinText}`;
+            }
+            shareText += `\nGeorgian: ${georgianText}`;
+
+            const shareData = {
+              title: "Chinese to Georgian Translation",
+              text: shareText,
+              url: window.location.href,
+            };
+
+            try {
+              // Try native Web Share API first (mobile)
+              if (
+                navigator.share &&
+                navigator.canShare &&
+                navigator.canShare(shareData)
+              ) {
+                await navigator.share(shareData);
+                console.log("Shared successfully");
+              } else {
+                // Fallback: copy to clipboard with share format
+                const fullShareText = `${shareText}\n\nTranslated at: ${window.location.href}`;
+
+                if (navigator.clipboard && window.isSecureContext) {
+                  await navigator.clipboard.writeText(fullShareText);
+                } else {
+                  // Fallback for older browsers
+                  const textArea = document.createElement("textarea");
+                  textArea.value = fullShareText;
+                  textArea.style.position = "fixed";
+                  textArea.style.left = "-999999px";
+                  textArea.style.top = "-999999px";
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  document.execCommand("copy");
+                  textArea.remove();
+                }
+
+                // Show feedback that it was copied
+                alert("Translation copied to clipboard for sharing!");
+              }
+
+              // Visual feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-blue-custom text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Share failed:", error);
+
+              // Show error feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Virtual Keyboard functionality
+      let isDragging = false;
+      let dragOffset = { x: 0, y: 0 };
+
+      function toggleVirtualKeyboard() {
+        const container = document.getElementById("keyboardContainer");
+        if (container.classList.contains("hidden")) {
+          openVirtualKeyboard();
+        } else {
+          closeVirtualKeyboard();
+        }
+      }
+
+      function openVirtualKeyboard() {
+        const container = document.getElementById("keyboardContainer");
+        container.classList.remove("hidden");
+
+        // Initialize drag functionality
+        initDragFunctionality();
+      }
+
+      // Georgian Keyboard Modal
+      function toggleGeoKeyboard() {
+        const id = "geoKeyboardContainer";
+        let container = document.getElementById(id);
+        if (!container) {
+          container = document.createElement("div");
+          container.id = id;
+          container.className =
+            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-lg shadow-xl w-[380px] overflow-hidden";
+          container.style.userSelect = "none";
+          container.innerHTML = `
+            <div class="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50 cursor-move" onmousedown="startDragGeo(event)">
+              <h2 class="text-sm font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-keyboard mr-1 text-blue-custom"></i>
+                ქართული კლავიატურა
+              </h2>
+              <button onclick="closeGeoKeyboard()" class="text-gray-400 hover:text-gray-600 p-1">
+                <i class="fas fa-times text-sm"></i>
+              </button>
+            </div>
+            <div class="p-3">
+              <div id="geoKeys" class="flex flex-col"></div>
+              <div class="mt-3 flex gap-1">
+                <button class="keyboard-btn bg-red-100 text-red-700 text-xs" onclick="geoDeleteChar()">⌫</button>
+                <button class="keyboard-btn bg-blue-100 text-blue-700 text-xs" onclick="geoClearInput()">გასუფთავება</button>
+              </div>
+            </div>`;
+          document.body.appendChild(container);
+          renderGeoKeys();
+        }
+        const hidden = container.classList.contains("hidden");
+        container.classList.toggle("hidden", !hidden);
+      }
+
+      function closeGeoKeyboard() {
+        const el = document.getElementById("geoKeyboardContainer");
+        if (el) el.classList.add("hidden");
+      }
+
+      function startDragGeo(e) {
+        const c = document.getElementById("geoKeyboardContainer");
+        const rect = c.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        function onMove(ev) {
+          c.style.left = ev.clientX - offsetX + "px";
+          c.style.top = ev.clientY - offsetY + "px";
+          c.style.transform = "none";
+        }
+        function onUp() {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+        }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      }
+
+      function renderGeoKeys() {
+        const grid = document.getElementById("geoKeys");
+        if (!grid) return;
+        const inputSel = document.getElementById("inputLangSelect");
+        const geoSel = document.getElementById("geoTargetSelect");
+        const script =
+          inputSel && inputSel.value === "georgian" && geoSel
+            ? geoSel.value
+            : "mkhedruli";
+        const rows = getGeoLayout(script);
+        grid.innerHTML = rows
+          .map(
+            (row, idx) =>
+              `<div class=\"flex gap-1${
+                idx < rows.length - 1 ? " mb-1" : ""
+              }\">` +
+              row
+                .map(
+                  (ch) =>
+                    `<button class=\"keyboard-btn geo-key bg-white rounded-lg shadow-sm hover:bg-blue-50\" onclick=\"insertText('${ch}')\">${ch}</button>`
+                )
+                .join("") +
+              `</div>`
+          )
+          .join("");
+      }
+
+      function getGeoLayout(script) {
+        // Basic alphabets for demo; can be extended
+        const mkh = [
+          "ა",
+          "ბ",
+          "გ",
+          "დ",
+          "ე",
+          "ვ",
+          "ზ",
+          "თ",
+          "ი",
+          "კ",
+          "ლ",
+          "მ",
+          "ნ",
+          "ო",
+          "პ",
+          "ჟ",
+          "რ",
+          "ს",
+          "ტ",
+          "უ",
+          "ფ",
+          "ქ",
+          "ღ",
+          "ყ",
+          "შ",
+          "ჩ",
+          "ც",
+          "ძ",
+          "წ",
+          "ჭ",
+          "ხ",
+          "ჯ",
+          "ჰ",
+        ];
+        const aso = mkh.map((ch) => convertCharScript(ch, "asomtavruli"));
+        const nus = mkh.map((ch) => convertCharScript(ch, "nuskhuri"));
+        const rows = (arr) => [
+          arr.slice(0, 11),
+          arr.slice(11, 22),
+          arr.slice(22),
+        ];
+        if (script === "asomtavruli") return rows(aso);
+        if (script === "nuskhuri") return rows(nus);
+        return rows(mkh);
+      }
+
+      function convertCharScript(ch, target) {
+        const c = ch.codePointAt(0);
+        const baseM = 0x10d0,
+          baseA = 0x10a0,
+          baseN = 0x2d00;
+        let idx;
+        if (c >= 0x10d0 && c <= 0x10ff) idx = c - baseM;
+        else if (c >= 0x10a0 && c <= 0x10cf) idx = c - baseA;
+        else if (c >= 0x2d00 && c <= 0x2d2f) idx = c - baseN;
+        else return ch;
+        if (target === "asomtavruli") return String.fromCodePoint(baseA + idx);
+        if (target === "nuskhuri") return String.fromCodePoint(baseN + idx);
+        return String.fromCodePoint(baseM + idx);
+      }
+
+      function geoDeleteChar() {
+        const input = document.getElementById("chineseInput");
+        const start = input.selectionStart,
+          end = input.selectionEnd;
+        if (start === end && start > 0) {
+          input.value =
+            input.value.slice(0, start - 1) + input.value.slice(end);
+          input.setSelectionRange(start - 1, start - 1);
+        } else if (start !== end) {
+          input.value = input.value.slice(0, start) + input.value.slice(end);
+          input.setSelectionRange(start, start);
+        }
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      }
+      function geoClearInput() {
+        const input = document.getElementById("chineseInput");
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      }
+
+      function closeVirtualKeyboard() {
+        const container = document.getElementById("keyboardContainer");
+        container.classList.add("hidden");
+      }
+
+      function insertText(text) {
+        const input = document.getElementById("chineseInput");
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const currentValue = input.value;
+
+        // Insert text at cursor position
+        const newValue =
+          currentValue.substring(0, start) + text + currentValue.substring(end);
+        input.value = newValue;
+
+        // Set cursor position after inserted text
+        const newPosition = start + text.length;
+        input.setSelectionRange(newPosition, newPosition);
+
+        // Trigger input event to update translation
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+
+        // Focus back to input
+        input.focus();
+      }
+
+      function deleteLastChar() {
+        const input = document.getElementById("chineseInput");
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const currentValue = input.value;
+
+        if (start === end && start > 0) {
+          // Delete one character before cursor
+          const newValue =
+            currentValue.substring(0, start - 1) +
+            currentValue.substring(start);
+          input.value = newValue;
+          input.setSelectionRange(start - 1, start - 1);
+        } else if (start !== end) {
+          // Delete selected text
+          const newValue =
+            currentValue.substring(0, start) + currentValue.substring(end);
+          input.value = newValue;
+          input.setSelectionRange(start, start);
+        }
+
+        // Trigger input event to update translation
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+
+        // Focus back to input
+        input.focus();
+      }
+
+      function clearInput() {
+        const input = document.getElementById("chineseInput");
+        input.value = "";
+        input.focus();
+
+        // Trigger input event to update translation
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+
+      function initDragFunctionality() {
+        const container = document.getElementById("keyboardContainer");
+        const header = container.querySelector(
+          ".flex.items-center.justify-between"
+        );
+
+        header.addEventListener("mousedown", startDrag);
+        document.addEventListener("mousemove", drag);
+        document.addEventListener("mouseup", stopDrag);
+
+        // Prevent text selection while dragging
+        header.addEventListener("selectstart", (e) => e.preventDefault());
+      }
+
+      function startDrag(e) {
+        if (e.target.closest("button")) return; // Don't drag if clicking buttons
+
+        isDragging = true;
+        const container = document.getElementById("keyboardContainer");
+        const rect = container.getBoundingClientRect();
+
+        dragOffset.x = e.clientX - rect.left;
+        dragOffset.y = e.clientY - rect.top;
+
+        container.classList.add("dragging");
+        e.preventDefault();
+      }
+
+      function drag(e) {
+        if (!isDragging) return;
+
+        const container = document.getElementById("keyboardContainer");
+        const containerRect = container.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let newX = e.clientX - dragOffset.x;
+        let newY = e.clientY - dragOffset.y;
+
+        // Constrain to viewport bounds
+        newX = Math.max(0, Math.min(newX, viewportWidth - containerRect.width));
+        newY = Math.max(
+          0,
+          Math.min(newY, viewportHeight - containerRect.height)
+        );
+
+        container.style.left = newX + "px";
+        container.style.top = newY + "px";
+        container.style.transform = "none";
+      }
+
+      function stopDrag() {
+        isDragging = false;
+        const container = document.getElementById("keyboardContainer");
+        container.classList.remove("dragging");
+      }
+
+      // Close keyboard modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeVirtualKeyboard();
+        }
+      });
+
+      // Fixed-height input; no auto-resize to keep counter pinned
+    </script>
+  </body>
+</html>
