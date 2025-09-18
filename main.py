@@ -255,6 +255,25 @@ def convert_georgian_scripts(text: str):
     return result
 
 
+# ---------------- Georgian → Latin (Mkhedruli transliteration) ----------------
+GEORGIAN_TO_LATIN_MAP = {
+    'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z',
+    'ჱ': 'ē', 'თ': 't', 'ი': 'i', 'კ': "k'", 'ლ': 'l', 'მ': 'm', 'ნ': 'n',
+    'ჲ': 'y', 'ო': 'o', 'პ': "p'", 'ჟ': 'zh', 'რ': 'r', 'ს': 's', 'ტ': "t'",
+    'ჳ': 'w', 'უ': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': "q'", 'შ': 'sh',
+    'ჩ': 'ch', 'ც': 'ts', 'ძ': 'dz', 'წ': "ts'", 'ჭ': "ch'", 'ხ': 'kh',
+    'ჴ': 'ẖ', 'ჯ': 'j', 'ჰ': 'h', 'ჵ': 'ō', 'ჶ': 'f', 'ჷ': 'ȳ', 'ჸ': 'ʔ',
+    'ჹ': 'ĝ', 'ჺ': 'ʕ', 'ჼ': 'n', 'ჾ': 'y', 'ჿ': 'w',
+}
+
+def normalize_to_mkhedruli(text: str) -> str:
+    return ''.join(convert_georgian_char(ch, 'mkhedruli') for ch in text)
+
+def transliterate_georgian_to_latin(text: str) -> str:
+    mkh = normalize_to_mkhedruli(text)
+    return ''.join(GEORGIAN_TO_LATIN_MAP.get(ch, ch) for ch in mkh)
+
+
 # ---------------- Polyphonic data loading ----------------
 def contains_cjk(text: str) -> bool:
     """Return True if any char is in common CJK ranges (incl. extensions)."""
@@ -357,24 +376,29 @@ def convert(data):
         has_chinese = contains_cjk(text)
 
         # Georgian script conversion path (do not touch Chinese path)
-        if input_language in ('geo_to_mkhedruli','geo_to_asomtavruli','geo_to_nuskhuri') or input_language == 'georgian':
+        if input_language in ('geo_to_mkhedruli','geo_to_asomtavruli','geo_to_nuskhuri','geo_to_latin') or input_language == 'georgian':
             # Single-target conversion (legacy modes or unified georgian + geo_target)
             if input_language == 'georgian':
-                target = geo_target if geo_target in ('mkhedruli','asomtavruli','nuskhuri') else 'mkhedruli'
+                target = geo_target if geo_target in ('mkhedruli','asomtavruli','nuskhuri','latin') else 'mkhedruli'
             else:
                 target = {
                     'geo_to_mkhedruli': 'mkhedruli',
                     'geo_to_asomtavruli': 'asomtavruli',
                     'geo_to_nuskhuri': 'nuskhuri',
+                    'geo_to_latin': 'latin',
                 }[input_language]
             source = detect_georgian_script(text) or 'mkhedruli'
-            converted = ''.join(convert_georgian_char(ch, target) for ch in text)
-            return {
-                "georgian_scripts": {
-                    "source": source,
-                    f"to_{target}": converted
+            if target == 'latin':
+                converted = transliterate_georgian_to_latin(text)
+                return {"georgian_scripts": {"source": source, "to_latin": converted}}
+            else:
+                converted = ''.join(convert_georgian_char(ch, target) for ch in text)
+                return {
+                    "georgian_scripts": {
+                        "source": source,
+                        f"to_{target}": converted
+                    }
                 }
-            }
 
         # If user typed Pinyin, check if it matches any special Chinese phrase
         if not has_chinese:

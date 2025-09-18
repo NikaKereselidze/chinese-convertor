@@ -128,6 +128,7 @@
                   <option value="mkhedruli" selected>მხედრული</option>
                   <option value="asomtavruli">ასომთავრული</option>
                   <option value="nuskhuri">ნუსხური</option>
+                  <option value="latin">ლათინური</option>
                 </select>
                 <i
                   class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
@@ -470,6 +471,7 @@
                   <option value="mkhedruli" selected>მხედრული</option>
                   <option value="asomtavruli">ასომთავრული</option>
                   <option value="nuskhuri">ნუსხური</option>
+                  <option value="latin">ლათინური</option>
                 </select>
                 <i
                   class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
@@ -553,7 +555,7 @@
       let includeTones = false;
       let showCaseSuffix = true;
       let inputLanguage = "chinese";
-      let geoTarget = null; // mkhedruli | asomtavruli | nuskhuri
+      let geoTarget = null; // mkhedruli | asomtavruli | nuskhuri | latin
 
       // Restore persisted preferences
       (function restorePrefs() {
@@ -1644,6 +1646,12 @@
           "ხ",
           "ჯ",
           "ჰ",
+          // Archaic letters retained for conversion support
+          "ჱ",
+          "ჲ",
+          "ჳ",
+          "ჴ",
+          "ჵ",
         ];
         const aso = mkh.map((ch) => convertCharScript(ch, "asomtavruli"));
         const nus = mkh.map((ch) => convertCharScript(ch, "nuskhuri"));
