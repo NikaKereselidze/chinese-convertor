@@ -34,13 +34,39 @@ def get_pinyin(words, include_tones=False):
     return all_result
 
 
+def normalize_pinyin_v_to_u(pinyin_variants):
+    """Convert 'v' to 'u' in pinyin variants for deduplication.
+    
+    This handles cases like 绿 where 'lv' and 'lu' should be deduplicated
+    when tones are disabled, since 'v' represents 'ü' which becomes 'u'.
+    """
+    if not pinyin_variants:
+        return pinyin_variants
+    
+    # Process each variant - simply convert v to u
+    processed_variants = []
+    for variant in pinyin_variants:
+        # Replace all 'v' with 'u' in the variant
+        normalized_variant = variant.replace('v', 'u')
+        processed_variants.append(normalized_variant)
+    
+    return processed_variants
+
+
 def remove_pinyin_tone_marks(pinyin_text):
     if isinstance(pinyin_text, (list, tuple)):
         pinyin_text = ' '.join(pinyin_text)
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', pinyin_text)
+    
+    # First handle ü specifically (it should become u when tones are removed)
+    normalized = pinyin_text.replace('ü', 'u')
+    
+    # Then remove tone marks using Unicode normalization
+    normalized = ''.join(
+        c for c in unicodedata.normalize('NFD', normalized)
         if unicodedata.category(c) != 'Mn'
     )
+    
+    return normalized
 
 
 def get_georgian(pinyin_list):
@@ -101,7 +127,11 @@ def get_georgian(pinyin_list):
             'e': 'ე',
             'i': 'ი',
             'u': 'უ',
-            'ü': 'იუ'
+            'ü': 'იუ',
+            'ǖ': 'იუ',  # ü with macron (1st tone)
+            'ǘ': 'იუ',  # ü with acute (2nd tone) 
+            'ǚ': 'იუ',  # ü with caron (3rd tone)
+            'ǜ': 'იუ'   # ü with grave (4th tone)
         }
         pattern_short = '|'.join(re.escape(char) for char in replacements_short.keys())
         text_short = re.sub(pattern_short, lambda match: replacements_short[match.group()], text_long)
@@ -190,6 +220,8 @@ def get_professional_pinyin(text, include_tones=False):
     pinyin_result = pypinyin.pinyin(text, style=style, heteronym=True)
     result_tuples = list(itertools.product(*pinyin_result))
     all_result = [' '.join(items) for items in result_tuples]
+    # Apply v->ü normalization
+    all_result = normalize_pinyin_v_to_u(all_result)
     return all_result
 
 
@@ -416,7 +448,10 @@ def convert(data):
 
         # If user typed Pinyin, check if it matches any special Chinese phrase
         if not has_chinese:
-            normalized_input = remove_pinyin_tone_marks(text.lower())
+            # First normalize 'v' to 'ü' in user input if appropriate
+            user_pinyin_variants = [text.lower()]
+            user_pinyin_variants = normalize_pinyin_v_to_u(user_pinyin_variants)
+            normalized_input = remove_pinyin_tone_marks(user_pinyin_variants[0])
             normalized_input = re.sub(r"\s+", " ", normalized_input).strip()
             compact_input = normalized_input.replace(" ", "")
 
@@ -486,13 +521,15 @@ def convert(data):
         else:
             # fallback: use professional pinyin with heteronym support
             variants = get_professional_pinyin(text, include_tones)
-
+        
         # Apply grouping/deduplication based on tone setting
         if include_tones:
+            # Keep original variants with tones, no v→u conversion needed
             grouped_variants, base_order = group_by_base_with_order(variants)
         else:
-            # Strip tones so tone variants collapse for single characters
-            variants_no_tone = [remove_pinyin_tone_marks(v) for v in variants]
+            # For no-tones case: convert v→u first, then strip tones and deduplicate
+            variants_v_to_u = normalize_pinyin_v_to_u(variants)
+            variants_no_tone = [remove_pinyin_tone_marks(v) for v in variants_v_to_u]
             grouped_variants = deduplicate_preserve_order(variants_no_tone)
 
         # Georgian mapping
@@ -503,7 +540,8 @@ def convert(data):
                 georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
         else:
-            georgian_variants = [map_pinyin_to_georgian(v) for v in grouped_variants]
+            # For no-tones: map using original variants (before v→u conversion) for correct Georgian
+            georgian_variants = [map_pinyin_to_georgian(remove_pinyin_tone_marks(v)) for v in variants]
             if show_case_suffix:
                 georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
@@ -537,11 +575,6 @@ def index_new_georgian():
 @app.route('/latin')
 def latin_transliterator():
     return render_template('index-latin.html')
-
-
-@app.route('/latin-academic')
-def latin_traditional_transliterator():
-    return render_template('index-latin-with-trad.html')
 
 
 @app.route('/convert', methods=['POST', 'OPTIONS'])

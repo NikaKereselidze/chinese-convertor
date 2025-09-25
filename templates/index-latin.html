@@ -163,6 +163,21 @@
           <div class="flex items-center p-4 border-b border-gray-100">
             <div class="flex items-center space-x-2 whitespace-nowrap">
               <span class="font-medium text-gray-700">ლათინური</span>
+              <div class="relative w-40">
+                <select
+                  id="latinStyleSelect"
+                  class="h-8 w-full pl-8 pr-6 text-xs border border-gray-300 rounded appearance-none bg-white"
+                >
+                  <option value="standard" selected>ჩვეულებრივი</option>
+                  <option value="academic">აკადემიური გამოყენება</option>
+                </select>
+                <i
+                  class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                ></i>
+                <i
+                  class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"
+                ></i>
+              </div>
             </div>
           </div>
 
@@ -230,13 +245,16 @@
       let debounceTimer = null;
       let inputLanguage = "georgian";
       let geoTarget = "mkhedruli";
-      let useApostrophes = false; // No apostrophes in this version
+      let latinStyle = "standard"; // standard or academic
+      let useApostrophes = false; // Determined by latinStyle
 
-      // Restore persisted preferences for Georgian script
+      // Restore persisted preferences
       (function restorePrefs() {
         try {
           const savedGeo = localStorage.getItem("pref.geoTarget.latin");
+          const savedLatinStyle = localStorage.getItem("pref.latinStyle");
           const geoSel = document.getElementById("geoTargetSelect");
+          const latinSel = document.getElementById("latinStyleSelect");
 
           if (
             geoSel &&
@@ -245,6 +263,16 @@
           ) {
             geoSel.value = savedGeo;
             geoTarget = savedGeo;
+          }
+
+          if (
+            latinSel &&
+            savedLatinStyle &&
+            ["standard", "academic"].includes(savedLatinStyle)
+          ) {
+            latinSel.value = savedLatinStyle;
+            latinStyle = savedLatinStyle;
+            useApostrophes = latinStyle === "academic";
           }
 
           renderGeoKeys();
@@ -265,6 +293,21 @@
             convertText(val);
           }
           renderGeoKeys();
+        });
+      }
+
+      // Latin style select
+      const latinSel = document.getElementById("latinStyleSelect");
+      if (latinSel) {
+        latinSel.addEventListener("change", function () {
+          latinStyle = this.value;
+          useApostrophes = latinStyle === "academic";
+          localStorage.setItem("pref.latinStyle", latinStyle);
+          const val = document.getElementById("chineseInput").value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
         });
       }
 
