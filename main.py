@@ -256,7 +256,8 @@ def convert_georgian_scripts(text: str):
 
 
 # ---------------- Georgian → Latin (Mkhedruli transliteration) ----------------
-GEORGIAN_TO_LATIN_MAP = {
+# Traditional mapping with apostrophes
+GEORGIAN_TO_LATIN_MAP_TRADITIONAL = {
     'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z',
     'ჱ': 'ē', 'თ': 't', 'ი': 'i', 'კ': "k'", 'ლ': 'l', 'მ': 'm', 'ნ': 'n',
     'ჲ': 'y', 'ო': 'o', 'პ': "p'", 'ჟ': 'zh', 'რ': 'r', 'ს': 's', 'ტ': "t'",
@@ -266,12 +267,24 @@ GEORGIAN_TO_LATIN_MAP = {
     'ჹ': 'ĝ', 'ჺ': 'ʕ', 'ჼ': 'n', 'ჾ': 'y', 'ჿ': 'w',
 }
 
+# Standard mapping without apostrophes
+GEORGIAN_TO_LATIN_MAP_STANDARD = {
+    'ა': 'a', 'ბ': 'b', 'გ': 'g', 'დ': 'd', 'ე': 'e', 'ვ': 'v', 'ზ': 'z',
+    'ჱ': 'ē', 'თ': 't', 'ი': 'i', 'კ': 'k', 'ლ': 'l', 'მ': 'm', 'ნ': 'n',
+    'ჲ': 'y', 'ო': 'o', 'პ': 'p', 'ჟ': 'zh', 'რ': 'r', 'ს': 's', 'ტ': 't',
+    'ჳ': 'w', 'უ': 'u', 'ფ': 'p', 'ქ': 'k', 'ღ': 'gh', 'ყ': 'q', 'შ': 'sh',
+    'ჩ': 'ch', 'ც': 'ts', 'ძ': 'dz', 'წ': 'ts', 'ჭ': 'ch', 'ხ': 'kh',
+    'ჴ': 'ẖ', 'ჯ': 'j', 'ჰ': 'h', 'ჵ': 'ō', 'ჶ': 'f', 'ჷ': 'ȳ', 'ჸ': 'ʔ',
+    'ჹ': 'ĝ', 'ჺ': 'ʕ', 'ჼ': 'n', 'ჾ': 'y', 'ჿ': 'w',
+}
+
 def normalize_to_mkhedruli(text: str) -> str:
     return ''.join(convert_georgian_char(ch, 'mkhedruli') for ch in text)
 
-def transliterate_georgian_to_latin(text: str) -> str:
+def transliterate_georgian_to_latin(text: str, use_apostrophes: bool = True) -> str:
     mkh = normalize_to_mkhedruli(text)
-    return ''.join(GEORGIAN_TO_LATIN_MAP.get(ch, ch) for ch in mkh)
+    mapping = GEORGIAN_TO_LATIN_MAP_TRADITIONAL if use_apostrophes else GEORGIAN_TO_LATIN_MAP_STANDARD
+    return ''.join(mapping.get(ch, ch) for ch in mkh)
 
 
 # ---------------- Polyphonic data loading ----------------
@@ -368,7 +381,7 @@ def convert(data):
             "成龙": "ჯეკი ჩანი",
             "成吉思汗": "ჩინგიზ-ყაენი",
             "忽必烈": "ყუბილაი",
-            "孔子": "კონფუცი",
+            "孔子": "კონფუცი",                                                                                                                                                        
         }
         
         # We compute pinyin dynamically for special cases; no static overrides needed.
@@ -389,7 +402,8 @@ def convert(data):
                 }[input_language]
             source = detect_georgian_script(text) or 'mkhedruli'
             if target == 'latin':
-                converted = transliterate_georgian_to_latin(text)
+                use_apostrophes = bool(data.get('use_apostrophes', True))
+                converted = transliterate_georgian_to_latin(text, use_apostrophes)
                 return {"georgian_scripts": {"source": source, "to_latin": converted}}
             else:
                 converted = ''.join(convert_georgian_char(ch, target) for ch in text)
@@ -518,6 +532,16 @@ def index():
 @app.route('/newversionforgeorgian')
 def index_new_georgian():
     return render_template('index-new.html')
+
+
+@app.route('/latin')
+def latin_transliterator():
+    return render_template('index-latin.html')
+
+
+@app.route('/latin-academic')
+def latin_traditional_transliterator():
+    return render_template('index-latin-with-trad.html')
 
 
 @app.route('/convert', methods=['POST', 'OPTIONS'])
