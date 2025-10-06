@@ -6,7 +6,6 @@ from pypinyin_dict.pinyin_data import ktghz2013
 from flask_cors import CORS
 import unicodedata
 import os
-import csv
 
 # Load the pinyin data
 ktghz2013.load()
@@ -56,17 +55,16 @@ def normalize_pinyin_v_to_u(pinyin_variants):
 def remove_pinyin_tone_marks(pinyin_text):
     if isinstance(pinyin_text, (list, tuple)):
         pinyin_text = ' '.join(pinyin_text)
-    
-    # First handle ü specifically (it should become u when tones are removed)
-    normalized = pinyin_text.replace('ü', 'u')
-    
-    # Then remove tone marks using Unicode normalization
-    normalized = ''.join(
-        c for c in unicodedata.normalize('NFD', normalized)
-        if unicodedata.category(c) != 'Mn'
+
+    # Remove ONLY pinyin tone marks (macron U+0304, acute U+0301, caron U+030C, grave U+0300)
+    # Preserve diaeresis (U+0308) so ü stays ü
+    decomposed = unicodedata.normalize('NFD', pinyin_text)
+    tone_marks = {'\u0304', '\u0301', '\u030C', '\u0300'}
+    stripped = ''.join(
+        ch for ch in decomposed
+        if not (unicodedata.category(ch) == 'Mn' and ch in tone_marks)
     )
-    
-    return normalized
+    return unicodedata.normalize('NFC', stripped)
 
 
 def get_georgian(pinyin_list):
@@ -149,6 +147,8 @@ def map_pinyin_to_georgian(pinyin_str):
     plain_syllables = [remove_pinyin_tone_marks(s) for s in syllables]
     # Ensure case-insensitive mapping by lowercasing
     plain_syllables = [s.lower() for s in plain_syllables]
+    # Treat 'v' as 'ü' for Georgian mapping in all modes (e.g., lv → lü)
+    plain_syllables = [s.replace('v', 'ü') for s in plain_syllables]
     georgian_syllables = [get_georgian([s]).get(s, '') for s in plain_syllables]
     return ' '.join(georgian_syllables).strip()
 
@@ -223,6 +223,27 @@ def get_professional_pinyin(text, include_tones=False):
     # Apply v->ü normalization
     all_result = normalize_pinyin_v_to_u(all_result)
     return all_result
+
+
+# ---------------- Pinyin variant helpers ----------------
+def split_last_two_letters_variant(pinyin_str: str) -> str | None:
+    """Return a variant where the last two letters of the last syllable are split.
+
+    Example: 'jian' -> 'ji an'; 'shuo' -> 'sh uo'. If not applicable, return None.
+    Works on tone-less or toned pinyin strings; whitespace separated syllables.
+    """
+    s = (pinyin_str or '').strip()
+    if not s:
+        return None
+    syllables = s.split()
+    last = syllables[-1]
+    if len(last) < 3:
+        return None
+    split_variant = last[:-2] + ' ' + last[-2:]
+    if not split_variant.strip():
+        return None
+    alt = syllables[:-1] + split_variant.split()
+    return ' '.join(alt)
 
 
 # ---------------- Georgian script conversion ----------------
@@ -338,52 +359,9 @@ def contains_cjk(text: str) -> bool:
     return False
 
 
-def load_polyphonic_data():
-    candidates = [
-        os.path.join(os.getcwd(), 'polyphonic_full.csv'),
-        os.path.join(os.path.expanduser('~'), 'Downloads', 'polyphonic_full.csv'),
-    ]
-
-    mapping = {}
-    source_path = next((p for p in candidates if os.path.isfile(p)), None)
-    if not source_path:
-        return mapping
-
-    try:
-        with open(source_path, 'r', encoding='utf-8-sig', newline='') as f:
-            reader = csv.DictReader(f)
-            for row in reader:
-                char = str(row.get('char_simpl', '')).strip()
-                readings = str(row.get('all_readings', '')).strip()
-                if not char or not readings:
-                    continue
-                tokens = [t.strip() for t in readings.split(' ') if t.strip()]
-                if not tokens:
-                    continue
-                mapping[char] = {
-                    'all_readings': readings,
-                    'readings_list': tokens,
-                }
-    except Exception:
-        return {}
-
-    return mapping
-
-
-POLYPHONIC_MAP = load_polyphonic_data()
-
-
 def lookup_polyphonic_readings(text):
-    """Lookup polyphonic readings for single char or multi-char phrase."""
-    data = POLYPHONIC_MAP.get(text)
-    if not data:
-        return None
-    readings = data.get('readings_list', [])
-    if not readings:
-        return None
-    main = readings[0]
-    others = readings[1:] if len(readings) > 1 else []
-    return (main, others)
+    """Deprecated: polyphonic_full CSV removed. Always return None."""
+    return None
 
 
 # ---------------- Conversion ----------------
@@ -513,15 +491,18 @@ def convert(data):
                 }
             }
 
-        # Polyphonic dictionary lookup (supports multi-char phrases too)
-        polyphonic = lookup_polyphonic_readings(text)
-        if polyphonic is not None:
-            main_pinyin, other_pinyins = polyphonic
-            variants = [main_pinyin] + other_pinyins
-        else:
-            # fallback: use professional pinyin with heteronym support
-            variants = get_professional_pinyin(text, include_tones)
+        # Use professional pinyin with heteronym support (CSV removed)
+        variants = get_professional_pinyin(text, include_tones)
         
+        # Generate split-last-two-letters alternates
+        alternates = []
+        for v in variants:
+            alt = split_last_two_letters_variant(remove_pinyin_tone_marks(v) if not include_tones else v)
+            if alt and alt != v:
+                alternates.append(alt)
+        if alternates:
+            variants = deduplicate_preserve_order(variants + alternates)
+
         # Apply grouping/deduplication based on tone setting
         if include_tones:
             # Keep original variants with tones, no v→u conversion needed
@@ -541,7 +522,27 @@ def convert(data):
             georgian_variants = deduplicate_preserve_order(georgian_variants)
         else:
             # For no-tones: map using original variants (before v→u conversion) for correct Georgian
-            georgian_variants = [map_pinyin_to_georgian(remove_pinyin_tone_marks(v)) for v in variants]
+            # Include both original and split-last-two-letters variants before mapping
+            base_variants = deduplicate_preserve_order(
+                [remove_pinyin_tone_marks(v) for v in variants]
+            )
+            split_bases = []
+            for bv in base_variants:
+                alt = split_last_two_letters_variant(bv)
+                if alt and alt != bv:
+                    split_bases.append(alt)
+            base_variants = deduplicate_preserve_order(base_variants + split_bases)
+            georgian_variants = [map_pinyin_to_georgian(bv) for bv in base_variants]
+            # If any toneful variant contains ü (or v), then in no-tones mode we render Georgian 'უ' as 'იუ'
+            toneful_variants = get_professional_pinyin(text, include_tones=True)
+            has_umlaut = False
+            for tv in toneful_variants:
+                tv_no_mark = remove_pinyin_tone_marks(tv)
+                if 'ü' in tv_no_mark or 'v' in tv:
+                    has_umlaut = True
+                    break
+            if has_umlaut:
+                georgian_variants = [g.replace('უ', 'იუ') if g else g for g in georgian_variants]
             if show_case_suffix:
                 georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
