@@ -494,14 +494,15 @@ def convert(data):
         # Use professional pinyin with heteronym support (CSV removed)
         variants = get_professional_pinyin(text, include_tones)
         
-        # Generate split-last-two-letters alternates
-        alternates = []
-        for v in variants:
-            alt = split_last_two_letters_variant(remove_pinyin_tone_marks(v) if not include_tones else v)
-            if alt and alt != v:
-                alternates.append(alt)
-        if alternates:
-            variants = deduplicate_preserve_order(variants + alternates)
+        # Generate split-last-two-letters alternates only for pinyin input (no Chinese)
+        if not has_chinese:
+            alternates = []
+            for v in variants:
+                alt = split_last_two_letters_variant(remove_pinyin_tone_marks(v) if not include_tones else v)
+                if alt and alt != v:
+                    alternates.append(alt)
+            if alternates:
+                variants = deduplicate_preserve_order(variants + alternates)
 
         # Apply grouping/deduplication based on tone setting
         if include_tones:
@@ -526,23 +527,27 @@ def convert(data):
             base_variants = deduplicate_preserve_order(
                 [remove_pinyin_tone_marks(v) for v in variants]
             )
-            split_bases = []
-            for bv in base_variants:
-                alt = split_last_two_letters_variant(bv)
-                if alt and alt != bv:
-                    split_bases.append(alt)
-            base_variants = deduplicate_preserve_order(base_variants + split_bases)
+            # Only add split-last-two-letters variants for pinyin input (no Chinese)
+            if not has_chinese:
+                split_bases = []
+                for bv in base_variants:
+                    alt = split_last_two_letters_variant(bv)
+                    if alt and alt != bv:
+                        split_bases.append(alt)
+                base_variants = deduplicate_preserve_order(base_variants + split_bases)
             georgian_variants = [map_pinyin_to_georgian(bv) for bv in base_variants]
-            # If any toneful variant contains ü (or v), then in no-tones mode we render Georgian 'უ' as 'იუ'
+            # In no-tones, check toneful pinyin: if any variant contains ü (or input uses v),
+            # render Georgian 'უ' as 'იუ'. Applies to both Chinese and pinyin inputs.
             toneful_variants = get_professional_pinyin(text, include_tones=True)
             has_umlaut = False
             for tv in toneful_variants:
                 tv_no_mark = remove_pinyin_tone_marks(tv)
-                if 'ü' in tv_no_mark or 'v' in tv:
+                if 'ü' in tv_no_mark or ('v' in tv and not has_chinese):
                     has_umlaut = True
                     break
             if has_umlaut:
-                georgian_variants = [g.replace('უ', 'იუ') if g else g for g in georgian_variants]
+                # Replace standalone 'უ' with 'იუ', but don't double-convert existing 'იუ'
+                georgian_variants = [re.sub(r'(?<!ი)უ', 'იუ', g) if g else g for g in georgian_variants]
             if show_case_suffix:
                 georgian_variants = [ensure_georgian_vowel_end(g) for g in georgian_variants]
             georgian_variants = deduplicate_preserve_order(georgian_variants)
