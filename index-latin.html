@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ქართული → ლათინური ტრანსლიტერატორი</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "blue-custom": "#4285f4",
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <style>
+      /* Larger size for Georgian keyboard keys only */
+      .geo-key {
+        height: 44px;
+        font-size: 15px;
+        /* Make keys expand evenly to fill row width */
+        flex: 1 1 0;
+        width: auto;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-custom text-white px-6 py-4">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white bg-opacity-20 p-2 rounded">
+            <i class="fas fa-language text-xl"></i>
+          </div>
+          <h1 class="text-xl font-medium">
+            ქართული → ლათინური ტრანსლიტერატორი
+          </h1>
+        </div>
+        <button
+          class="flex items-center space-x-2 bg-white bg-opacity-10 hover:bg-opacity-20 px-3 py-2 rounded transition-colors"
+          onclick="openHistoryModal()"
+        >
+          <i class="fas fa-history"></i>
+          <span>ისტორია</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- History Modal -->
+    <div
+      id="historyModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div
+          class="flex items-center justify-between p-4 border-b border-gray-200"
+        >
+          <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-history mr-2 text-blue-custom"></i>
+            ტრანსლიტერაციის ისტორია
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              onclick="clearHistory()"
+              class="text-red-500 hover:text-red-700 px-3 py-1 rounded text-sm font-medium transition-colors"
+            >
+              <i class="fas fa-trash mr-1"></i>
+              გასუფთავება
+            </button>
+            <button
+              onclick="closeHistoryModal()"
+              class="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="overflow-y-auto max-h-80">
+          <div id="historyContent" class="p-4">
+            <!-- History items will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Georgian Input Section -->
+        <div
+          class="bg-white rounded-lg shadow-sm border border-gray-200 relative"
+        >
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2 whitespace-nowrap">
+              <span class="font-medium text-gray-700">ქართული</span>
+              <div class="relative w-40">
+                <select
+                  id="geoTargetSelect"
+                  class="h-8 w-full pl-8 pr-6 text-xs border border-gray-300 rounded appearance-none bg-white"
+                >
+                  <option value="mkhedruli" selected>მხედრული</option>
+                  <option value="asomtavruli">ასომთავრული</option>
+                  <option value="nuskhuri">ნუსხური</option>
+                </select>
+                <i
+                  class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                ></i>
+                <i
+                  class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"
+                ></i>
+              </div>
+            </div>
+            <div class="ml-auto flex items-center space-x-3 pr-2">
+              <button
+                id="geoKeyboardBtn"
+                class="text-gray-500 hover:text-gray-700 transition-colors pr-2 -mb-1"
+                title="ქართული კლავიატურა"
+                onclick="toggleGeoKeyboard()"
+              >
+                <i class="fas fa-keyboard text-lg"></i>
+              </button>
+            </div>
+          </div>
+          <!-- Input Area -->
+          <div class="relative">
+            <!-- Fixed-height input wrapper -->
+            <div class="relative h-16">
+              <textarea
+                id="chineseInput"
+                class="absolute inset-0 w-full h-full p-4 text-lg resize-none border-none outline-none placeholder-gray-400"
+                placeholder="ჩაწერეთ ქართული ტექსტი..."
+                maxlength="80"
+                oninput="handleInput()"
+                onkeyup="updateCharCount()"
+              ></textarea>
+            </div>
+          </div>
+          <!-- Counter positioned at the card's bottom-right corner (child of card) -->
+          <div
+            id="charCounter"
+            class="absolute bottom-2 right-3 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded pointer-events-none z-20"
+          >
+            0 / 80
+          </div>
+        </div>
+
+        <!-- Latin Output Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2 whitespace-nowrap">
+              <span class="font-medium text-gray-700">ლათინური</span>
+              <div class="relative w-40">
+                <select
+                  id="latinStyleSelect"
+                  class="h-8 w-full pl-8 pr-6 text-xs border border-gray-300 rounded appearance-none bg-white"
+                >
+                  <option value="standard" selected>ჩვეულებრივი</option>
+                  <option value="academic">აკადემიური გამოყენება</option>
+                </select>
+                <i
+                  class="fas fa-font absolute left-2 top-1/2 -translate-y-1/2 text-gray-400"
+                ></i>
+                <i
+                  class="fas fa-chevron-down absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-[10px]"
+                ></i>
+              </div>
+            </div>
+          </div>
+
+          <!-- Output Area -->
+          <div class="relative">
+            <div
+              id="georgianOutput"
+              class="w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto"
+            >
+              ტრანსლიტერაცია გამოჩნდება აქ...
+            </div>
+
+            <!-- Bottom Controls -->
+            <div
+              class="flex items-center justify-between p-4 border-t border-gray-100"
+            >
+              <div class="text-sm text-gray-500">
+                <!-- Empty space for alignment -->
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  id="copyBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Copy"
+                  disabled
+                >
+                  <i class="fas fa-copy text-lg"></i>
+                </button>
+                <button
+                  id="shareBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Share"
+                  disabled
+                >
+                  <i class="fas fa-share text-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Credits -->
+      <footer class="text-center text-sm text-gray-500 mt-8">
+        შექმნილია <span class="text-red-500">❤</span> სსიპ სახელმწიფო ენის
+        დეპარტამენტის © მიერ 2025
+        <div class="mt-2 space-x-4">
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონფიდენციალურობა</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >წესები</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონტაქტი</a
+          >
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      let isTranslating = false;
+      let debounceTimer = null;
+      let inputLanguage = "georgian";
+      let geoTarget = "mkhedruli";
+      let latinStyle = "standard"; // standard or academic
+      let useApostrophes = false; // Determined by latinStyle
+
+      // Restore persisted preferences
+      (function restorePrefs() {
+        try {
+          const savedGeo = localStorage.getItem("pref.geoTarget.latin");
+          const savedLatinStyle = localStorage.getItem("pref.latinStyle");
+          const geoSel = document.getElementById("geoTargetSelect");
+          const latinSel = document.getElementById("latinStyleSelect");
+
+          if (
+            geoSel &&
+            savedGeo &&
+            ["mkhedruli", "asomtavruli", "nuskhuri"].includes(savedGeo)
+          ) {
+            geoSel.value = savedGeo;
+            geoTarget = savedGeo;
+          }
+
+          if (
+            latinSel &&
+            savedLatinStyle &&
+            ["standard", "academic"].includes(savedLatinStyle)
+          ) {
+            latinSel.value = savedLatinStyle;
+            latinStyle = savedLatinStyle;
+            useApostrophes = latinStyle === "academic";
+          }
+
+          renderGeoKeys();
+        } catch (e) {
+          console.warn("Prefs restore failed", e);
+        }
+      })();
+
+      // Georgian script target select
+      const geoSel = document.getElementById("geoTargetSelect");
+      if (geoSel) {
+        geoSel.addEventListener("change", function () {
+          geoTarget = this.value;
+          localStorage.setItem("pref.geoTarget.latin", geoTarget);
+          const val = document.getElementById("chineseInput").value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
+          renderGeoKeys();
+        });
+      }
+
+      // Latin style select
+      const latinSel = document.getElementById("latinStyleSelect");
+      if (latinSel) {
+        latinSel.addEventListener("change", function () {
+          latinStyle = this.value;
+          useApostrophes = latinStyle === "academic";
+          localStorage.setItem("pref.latinStyle", latinStyle);
+          const val = document.getElementById("chineseInput").value.trim();
+          if (val) {
+            if (debounceTimer) clearTimeout(debounceTimer);
+            convertText(val);
+          }
+        });
+      }
+
+      // History management
+      function saveToHistory(georgianText, latinText) {
+        const historyItem = {
+          id: Date.now(),
+          georgian: georgianText,
+          latin: latinText,
+          timestamp: new Date().toISOString(),
+        };
+
+        let history = getHistory();
+
+        // Check if this exact translation already exists
+        const existingIndex = history.findIndex(
+          (item) => item.georgian === georgianText && item.latin === latinText
+        );
+
+        if (existingIndex !== -1) {
+          // Remove existing and add to top
+          history.splice(existingIndex, 1);
+        }
+
+        // Add to beginning of array
+        history.unshift(historyItem);
+
+        // Keep only last 50 translations
+        if (history.length > 50) {
+          history = history.slice(0, 50);
+        }
+
+        localStorage.setItem(
+          "translationHistory.latin",
+          JSON.stringify(history)
+        );
+      }
+
+      function getHistory() {
+        try {
+          const stored = localStorage.getItem("translationHistory.latin");
+          return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+          console.error("Error reading history:", error);
+          return [];
+        }
+      }
+
+      function clearHistory() {
+        if (
+          confirm("Are you sure you want to clear all translation history?")
+        ) {
+          localStorage.removeItem("translationHistory.latin");
+          renderHistory();
+        }
+      }
+
+      function openHistoryModal() {
+        document.getElementById("historyModal").classList.remove("hidden");
+        renderHistory();
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeHistoryModal() {
+        document.getElementById("historyModal").classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+
+      function renderHistory() {
+        const historyContent = document.getElementById("historyContent");
+        const history = getHistory();
+
+        if (history.length === 0) {
+          historyContent.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+              <i class="fas fa-history text-4xl mb-4 opacity-50"></i>
+              <p class="text-lg">No translation history yet</p>
+              <p class="text-sm">Start translating to build your history</p>
+            </div>
+          `;
+          return;
+        }
+
+        const historyHTML = history
+          .map((item) => {
+            const date = new Date(item.timestamp);
+            const timeAgo = getTimeAgo(date);
+
+            return `
+            <div class="border border-gray-200 rounded-lg p-4 mb-3 hover:bg-gray-50 transition-colors cursor-pointer" onclick="useHistoryItem('${item.georgian.replace(
+              /'/g,
+              "\\'"
+            )}', '${item.latin.replace(/'/g, "\\'")}')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs text-gray-500">${timeAgo}</span>
+                <button onclick="event.stopPropagation(); deleteHistoryItem(${
+                  item.id
+                })" class="text-red-400 hover:text-red-600 p-1">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ქართული:</span>
+                  <p class="text-gray-800 font-medium">${item.georgian}</p>
+                </div>
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ლათინური:</span>
+                  <p class="text-gray-700">${item.latin}</p>
+                </div>
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+
+        historyContent.innerHTML = historyHTML;
+      }
+
+      function deleteHistoryItem(id) {
+        let history = getHistory();
+        history = history.filter((item) => item.id !== id);
+        localStorage.setItem(
+          "translationHistory.latin",
+          JSON.stringify(history)
+        );
+        renderHistory();
+      }
+
+      function useHistoryItem(georgianText, latinText) {
+        // Fill the input with the selected translation
+        document.getElementById("chineseInput").value = georgianText;
+
+        // Update the output
+        const output = document.getElementById("georgianOutput");
+        output.textContent = latinText;
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+        // Enable buttons
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        copyBtn.disabled = false;
+        shareBtn.disabled = false;
+        copyBtn.classList.remove("opacity-50");
+        shareBtn.classList.remove("opacity-50");
+
+        // Update character count
+        updateCharCount();
+
+        // Close modal
+        closeHistoryModal();
+      }
+
+      function getTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return "Just now";
+        if (diffInSeconds < 3600)
+          return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400)
+          return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000)
+          return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+        return date.toLocaleDateString();
+      }
+
+      // Close modal when clicking outside
+      document.addEventListener("click", function (event) {
+        const modal = document.getElementById("historyModal");
+        if (event.target === modal) {
+          closeHistoryModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeHistoryModal();
+        }
+      });
+
+      function updateCharCount() {
+        const input = document.getElementById("chineseInput");
+        const charCounter = document.getElementById("charCounter");
+        const len = input.value.length;
+        if (charCounter) charCounter.textContent = `${len} / 80`;
+      }
+
+      function handleInput() {
+        updateCharCount();
+
+        const input = document.getElementById("chineseInput").value.trim();
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+
+        // Clear any existing timer
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        if (!input) {
+          output.textContent = "ტრანსლიტერაცია გამოჩნდება აქ...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          return;
+        }
+
+        // Show "typing..." immediately for visual feedback
+        if (!isTranslating) {
+          output.textContent = "Translating...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+        }
+
+        // Set a new timer to translate after user stops typing
+        debounceTimer = setTimeout(() => {
+          if (!isTranslating) {
+            convertText(input);
+          }
+        }, 800);
+      }
+
+      function convertText(text) {
+        if (isTranslating) return;
+
+        isTranslating = true;
+        const output = document.getElementById("georgianOutput");
+
+        output.textContent = "Translating...";
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+
+        const payload = {
+          text: text,
+          input_language: inputLanguage,
+          geo_target: "latin",
+          use_apostrophes: useApostrophes,
+        };
+
+        fetch("/convert", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            displayResult(data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            const output = document.getElementById("georgianOutput");
+            output.textContent = "Translation error. Please try again.";
+            output.className =
+              "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          })
+          .finally(() => {
+            isTranslating = false;
+          });
+      }
+
+      function displayResult(data) {
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        const input = document.getElementById("chineseInput");
+
+        if (data.error) {
+          output.textContent = data.error;
+          output.className =
+            "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          return;
+        }
+
+        // Georgian script conversion handling
+        if (data.georgian_scripts && data.georgian_scripts.to_latin) {
+          // Ensure Latin result starts with an uppercase letter
+          const rawLatin = data.georgian_scripts.to_latin || "";
+          const converted =
+            rawLatin.length > 0
+              ? rawLatin.charAt(0).toUpperCase() + rawLatin.slice(1)
+              : rawLatin;
+          output.innerHTML = `<div class="text-gray-900">${converted}</div>`;
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+          copyBtn.disabled = false;
+          shareBtn.disabled = false;
+          copyBtn.classList.remove("opacity-50");
+          shareBtn.classList.remove("opacity-50");
+
+          // Save to history
+          const georgianText = input.value.trim();
+          if (georgianText && converted) {
+            saveToHistory(georgianText, converted);
+          }
+        } else {
+          output.textContent = "No translation available.";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+        }
+      }
+
+      // Copy functionality
+      document
+        .getElementById("copyBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          if (
+            output.textContent &&
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ")
+          ) {
+            try {
+              const textToCopy = output.textContent.trim();
+
+              if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(textToCopy);
+              } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand("copy");
+                textArea.remove();
+              }
+
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-green-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Copy failed:", error);
+
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Share functionality
+      document
+        .getElementById("shareBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          const input = document.getElementById("chineseInput");
+
+          if (
+            output.textContent &&
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ...")
+          ) {
+            const georgianText = input.value.trim();
+            const latinText = output.textContent.trim();
+
+            let shareText = `Georgian: ${georgianText}\nLatin: ${latinText}`;
+
+            const shareData = {
+              title: "Georgian to Latin Transliteration",
+              text: shareText,
+              url: window.location.href,
+            };
+
+            try {
+              if (
+                navigator.share &&
+                navigator.canShare &&
+                navigator.canShare(shareData)
+              ) {
+                await navigator.share(shareData);
+                console.log("Shared successfully");
+              } else {
+                const fullShareText = `${shareText}\n\nTransliterated at: ${window.location.href}`;
+
+                if (navigator.clipboard && window.isSecureContext) {
+                  await navigator.clipboard.writeText(fullShareText);
+                } else {
+                  const textArea = document.createElement("textarea");
+                  textArea.value = fullShareText;
+                  textArea.style.position = "fixed";
+                  textArea.style.left = "-999999px";
+                  textArea.style.top = "-999999px";
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  document.execCommand("copy");
+                  textArea.remove();
+                }
+
+                alert("Translation copied to clipboard for sharing!");
+              }
+
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-blue-custom text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Share failed:", error);
+
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Georgian Keyboard Modal
+      function toggleGeoKeyboard() {
+        const id = "geoKeyboardContainer";
+        let container = document.getElementById(id);
+        if (!container) {
+          container = document.createElement("div");
+          container.id = id;
+          container.className =
+            "fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white rounded-lg shadow-xl w-[380px] overflow-hidden";
+          container.style.userSelect = "none";
+          container.innerHTML = `
+            <div class="flex items-center justify-between p-2 border-b border-gray-200 bg-gray-50 cursor-move" onmousedown="startDragGeo(event)">
+              <h2 class="text-sm font-semibold text-gray-800 flex items-center">
+                <i class="fas fa-keyboard mr-1 text-blue-custom"></i>
+                ქართული კლავიატურა
+              </h2>
+              <button onclick="closeGeoKeyboard()" class="text-gray-400 hover:text-gray-600 p-1">
+                <i class="fas fa-times text-sm"></i>
+              </button>
+            </div>
+            <div class="p-3">
+              <div id="geoKeys" class="flex flex-col"></div>
+              <div class="mt-3 flex gap-1">
+                <button class="keyboard-btn bg-red-100 text-red-700 text-xs" onclick="geoDeleteChar()">⌫</button>
+                <button class="keyboard-btn bg-blue-100 text-blue-700 text-xs" onclick="geoClearInput()">გასუფთავება</button>
+              </div>
+            </div>`;
+          document.body.appendChild(container);
+          renderGeoKeys();
+        }
+        const hidden = container.classList.contains("hidden");
+        container.classList.toggle("hidden", !hidden);
+      }
+
+      function closeGeoKeyboard() {
+        const el = document.getElementById("geoKeyboardContainer");
+        if (el) el.classList.add("hidden");
+      }
+
+      function startDragGeo(e) {
+        const c = document.getElementById("geoKeyboardContainer");
+        const rect = c.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+        function onMove(ev) {
+          c.style.left = ev.clientX - offsetX + "px";
+          c.style.top = ev.clientY - offsetY + "px";
+          c.style.transform = "none";
+        }
+        function onUp() {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+        }
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      }
+
+      function renderGeoKeys() {
+        const grid = document.getElementById("geoKeys");
+        if (!grid) return;
+        const script = geoTarget || "mkhedruli";
+        const rows = getGeoLayout(script);
+        grid.innerHTML = rows
+          .map(
+            (row, idx) =>
+              `<div class="flex gap-1${
+                idx < rows.length - 1 ? " mb-1" : ""
+              }">` +
+              row
+                .map(
+                  (ch) =>
+                    `<button class="keyboard-btn geo-key bg-white rounded-lg shadow-sm hover:bg-blue-50" onclick="insertText('${ch}')">${ch}</button>`
+                )
+                .join("") +
+              `</div>`
+          )
+          .join("");
+      }
+
+      function getGeoLayout(script) {
+        const mkh = [
+          "ა",
+          "ბ",
+          "გ",
+          "დ",
+          "ე",
+          "ვ",
+          "ზ",
+          "თ",
+          "ი",
+          "კ",
+          "ლ",
+          "მ",
+          "ნ",
+          "ო",
+          "პ",
+          "ჟ",
+          "რ",
+          "ს",
+          "ტ",
+          "უ",
+          "ფ",
+          "ქ",
+          "ღ",
+          "ყ",
+          "შ",
+          "ჩ",
+          "ც",
+          "ძ",
+          "წ",
+          "ჭ",
+          "ხ",
+          "ჯ",
+          "ჰ",
+          "ჱ",
+          "ჲ",
+          "ჳ",
+          "ჴ",
+          "ჵ",
+        ];
+        const aso = mkh.map((ch) => convertCharScript(ch, "asomtavruli"));
+        const nus = mkh.map((ch) => convertCharScript(ch, "nuskhuri"));
+        const rows = (arr) => [
+          arr.slice(0, 11),
+          arr.slice(11, 22),
+          arr.slice(22),
+        ];
+        if (script === "asomtavruli") return rows(aso);
+        if (script === "nuskhuri") return rows(nus);
+        return rows(mkh);
+      }
+
+      function convertCharScript(ch, target) {
+        const c = ch.codePointAt(0);
+        const baseM = 0x10d0,
+          baseA = 0x10a0,
+          baseN = 0x2d00;
+        let idx;
+        if (c >= 0x10d0 && c <= 0x10ff) idx = c - baseM;
+        else if (c >= 0x10a0 && c <= 0x10cf) idx = c - baseA;
+        else if (c >= 0x2d00 && c <= 0x2d2f) idx = c - baseN;
+        else return ch;
+        if (target === "asomtavruli") return String.fromCodePoint(baseA + idx);
+        if (target === "nuskhuri") return String.fromCodePoint(baseN + idx);
+        return String.fromCodePoint(baseM + idx);
+      }
+
+      function geoDeleteChar() {
+        const input = document.getElementById("chineseInput");
+        const start = input.selectionStart,
+          end = input.selectionEnd;
+        if (start === end && start > 0) {
+          input.value =
+            input.value.slice(0, start - 1) + input.value.slice(end);
+          input.setSelectionRange(start - 1, start - 1);
+        } else if (start !== end) {
+          input.value = input.value.slice(0, start) + input.value.slice(end);
+          input.setSelectionRange(start, start);
+        }
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      }
+
+      function geoClearInput() {
+        const input = document.getElementById("chineseInput");
+        input.value = "";
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      }
+
+      function insertText(text) {
+        const input = document.getElementById("chineseInput");
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const currentValue = input.value;
+
+        const newValue =
+          currentValue.substring(0, start) + text + currentValue.substring(end);
+        input.value = newValue;
+
+        const newPosition = start + text.length;
+        input.setSelectionRange(newPosition, newPosition);
+
+        input.dispatchEvent(new Event("input", { bubbles: true }));
+        input.focus();
+      }
+    </script>
+  </body>
+</html>
