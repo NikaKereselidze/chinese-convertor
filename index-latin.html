@@ -602,12 +602,12 @@
 
         // Georgian script conversion handling
         if (data.georgian_scripts && data.georgian_scripts.to_latin) {
-          // Ensure Latin result starts with an uppercase letter
+          // Ensure Latin result is capitalized (each word starts with uppercase)
           const rawLatin = data.georgian_scripts.to_latin || "";
-          const converted =
-            rawLatin.length > 0
-              ? rawLatin.charAt(0).toUpperCase() + rawLatin.slice(1)
-              : rawLatin;
+          const converted = rawLatin.replace(
+            /(^|\\s)(\\S)/g,
+            (match, p1, p2) => p1 + p2.toUpperCase()
+          );
           output.innerHTML = `<div class="text-gray-900">${converted}</div>`;
           output.className =
             "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
