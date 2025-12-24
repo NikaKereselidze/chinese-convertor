@@ -602,10 +602,10 @@
 
         // Georgian script conversion handling
         if (data.georgian_scripts && data.georgian_scripts.to_latin) {
-          // Ensure Latin result is capitalized (each word starts with uppercase)
+          // Ensure Latin result is capitalized (first letter of each word is uppercase, but not after apostrophes)
           const rawLatin = data.georgian_scripts.to_latin || "";
           const converted = rawLatin.replace(
-            /(^|\\s)(\\S)/g,
+            /(^|\s)([a-z])/g,
             (match, p1, p2) => p1 + p2.toUpperCase()
           );
           output.innerHTML = `<div class="text-gray-900">${converted}</div>`;
