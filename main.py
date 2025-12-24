@@ -567,7 +567,7 @@ def convert(data):
         return {"error": str(e)}
 
 
-# ---------------- Flask routes ----------------
+# ---------------- Flask routes ---------------
 @app.route('/')
 def index():
     return render_template('index.html')
