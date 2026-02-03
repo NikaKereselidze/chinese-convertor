@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ინგლისური → ქართული ტრანსლიტერატორი</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "blue-custom": "#4285f4",
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+  </head>
+  <body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-custom text-white px-6 py-4">
+      <div class="max-w-4xl mx-auto flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <div class="bg-white bg-opacity-20 p-2 rounded">
+            <i class="fas fa-language text-xl"></i>
+          </div>
+          <h1 class="text-xl font-medium">
+            ინგლისური → ქართული ტრანსლიტერატორი
+          </h1>
+        </div>
+        <button
+          class="flex items-center space-x-2 bg-white bg-opacity-10 hover:bg-opacity-20 px-3 py-2 rounded transition-colors"
+          onclick="openHistoryModal()"
+        >
+          <i class="fas fa-history"></i>
+          <span>ისტორია</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- History Modal -->
+    <div
+      id="historyModal"
+      class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-96 overflow-hidden"
+      >
+        <!-- Modal Header -->
+        <div
+          class="flex items-center justify-between p-4 border-b border-gray-200"
+        >
+          <h2 class="text-xl font-semibold text-gray-800 flex items-center">
+            <i class="fas fa-history mr-2 text-blue-custom"></i>
+            ტრანსლიტერაციის ისტორია
+          </h2>
+          <div class="flex items-center space-x-2">
+            <button
+              onclick="clearHistory()"
+              class="text-red-500 hover:text-red-700 px-3 py-1 rounded text-sm font-medium transition-colors"
+            >
+              <i class="fas fa-trash mr-1"></i>
+              გასუფთავება
+            </button>
+            <button
+              onclick="closeHistoryModal()"
+              class="text-gray-400 hover:text-gray-600 p-1"
+            >
+              <i class="fas fa-times text-xl"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Modal Content -->
+        <div class="overflow-y-auto max-h-80">
+          <div id="historyContent" class="p-4">
+            <!-- History items will be inserted here -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-6 py-8">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- English Input Section -->
+        <div
+          class="bg-white rounded-lg shadow-sm border border-gray-200 relative"
+        >
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-gray-700">ინგლისური</span>
+            </div>
+          </div>
+          <!-- Input Area -->
+          <div class="relative">
+            <!-- Fixed-height input wrapper -->
+            <div class="relative h-16">
+              <textarea
+                id="englishInput"
+                class="absolute inset-0 w-full h-full p-4 text-lg resize-none border-none outline-none placeholder-gray-400"
+                placeholder="ჩაწერეთ ინგლისური სიტყვა..."
+                maxlength="100"
+                oninput="handleInput()"
+                onkeyup="updateCharCount()"
+              ></textarea>
+            </div>
+          </div>
+          <!-- Counter positioned at the card's bottom-right corner (child of card) -->
+          <div
+            id="charCounter"
+            class="absolute bottom-2 right-3 text-xs text-gray-500 bg-white/80 px-2 py-0.5 rounded pointer-events-none z-20"
+          >
+            0 / 100
+          </div>
+        </div>
+
+        <!-- Georgian Output Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+          <!-- Language Header -->
+          <div class="flex items-center p-4 border-b border-gray-100">
+            <div class="flex items-center space-x-2">
+              <span class="font-medium text-gray-700">ქართული</span>
+            </div>
+          </div>
+
+          <!-- Output Area -->
+          <div class="relative">
+            <div
+              id="georgianOutput"
+              class="w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto"
+            >
+              ტრანსლიტერაცია გამოჩნდება აქ...
+            </div>
+
+            <!-- Bottom Controls -->
+            <div
+              class="flex items-center justify-between p-4 border-t border-gray-100"
+            >
+              <div class="text-sm text-gray-500">
+                <!-- Empty space for alignment -->
+              </div>
+              <div class="flex items-center space-x-3">
+                <button
+                  id="copyBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Copy"
+                  disabled
+                >
+                  <i class="fas fa-copy text-lg"></i>
+                </button>
+                <button
+                  id="shareBtn"
+                  class="p-2 text-gray-400 hover:text-gray-600 transition-colors opacity-50"
+                  title="Share"
+                  disabled
+                >
+                  <i class="fas fa-share text-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Credits -->
+      <footer class="text-center text-sm text-gray-500 mt-8">
+        შექმნილია <span class="text-red-500">❤</span> სსიპ სახელმწიფო ენის
+        დეპარტამენტის © მიერ 2025
+        <div class="mt-2 space-x-4">
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონფიდენციალურობა</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >წესები</a
+          >
+          <span>•</span>
+          <a href="#" class="hover:text-blue-custom transition-colors"
+            >კონტაქტი</a
+          >
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      let isTranslating = false;
+      let debounceTimer = null;
+
+      // History management
+      function saveToHistory(englishText, results) {
+        const historyItem = {
+          id: Date.now(),
+          english: englishText,
+          results: results,
+          timestamp: new Date().toISOString(),
+        };
+
+        let history = getHistory();
+
+        // Check if this exact translation already exists
+        const existingIndex = history.findIndex(
+          (item) => item.english === englishText
+        );
+
+        if (existingIndex !== -1) {
+          // Remove existing and add to top
+          history.splice(existingIndex, 1);
+        }
+
+        // Add to beginning of array
+        history.unshift(historyItem);
+
+        // Keep only last 50 translations
+        if (history.length > 50) {
+          history = history.slice(0, 50);
+        }
+
+        localStorage.setItem("englishTranslationHistory", JSON.stringify(history));
+      }
+
+      function getHistory() {
+        try {
+          const stored = localStorage.getItem("englishTranslationHistory");
+          return stored ? JSON.parse(stored) : [];
+        } catch (error) {
+          console.error("Error reading history:", error);
+          return [];
+        }
+      }
+
+      function clearHistory() {
+        if (
+          confirm("Are you sure you want to clear all translation history?")
+        ) {
+          localStorage.removeItem("englishTranslationHistory");
+          renderHistory();
+        }
+      }
+
+      function openHistoryModal() {
+        document.getElementById("historyModal").classList.remove("hidden");
+        renderHistory();
+        document.body.style.overflow = "hidden";
+      }
+
+      function closeHistoryModal() {
+        document.getElementById("historyModal").classList.add("hidden");
+        document.body.style.overflow = "auto";
+      }
+
+      function renderHistory() {
+        const historyContent = document.getElementById("historyContent");
+        const history = getHistory();
+
+        if (history.length === 0) {
+          historyContent.innerHTML = `
+            <div class="text-center py-8 text-gray-500">
+              <i class="fas fa-history text-4xl mb-4 opacity-50"></i>
+              <p class="text-lg">No translation history yet</p>
+              <p class="text-sm">Start translating to build your history</p>
+            </div>
+          `;
+          return;
+        }
+
+        const historyHTML = history
+          .map((item) => {
+            const date = new Date(item.timestamp);
+            const timeAgo = getTimeAgo(date);
+            const firstResult = item.results && item.results.length > 0 ? item.results[0] : null;
+
+            return `
+            <div class="border border-gray-200 rounded-lg p-4 mb-3 hover:bg-gray-50 transition-colors cursor-pointer" onclick="useHistoryItem('${item.english.replace(
+              /'/g,
+              "\\'"
+            )}')">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-xs text-gray-500">${timeAgo}</span>
+                <button onclick="event.stopPropagation(); deleteHistoryItem(${
+                  item.id
+                })" class="text-red-400 hover:text-red-600 p-1">
+                  <i class="fas fa-trash text-sm"></i>
+                </button>
+              </div>
+              <div class="space-y-2">
+                <div>
+                  <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ინგლისური:</span>
+                  <p class="text-gray-800 font-medium">${item.english}</p>
+                </div>
+                ${
+                  firstResult
+                    ? `
+                  <div>
+                    <span class="text-xs font-medium text-gray-600 uppercase tracking-wide">ქართული:</span>
+                    <p class="text-gray-700">${firstResult.georgian || ''}</p>
+                  </div>
+                `
+                    : ""
+                }
+              </div>
+            </div>
+          `;
+          })
+          .join("");
+
+        historyContent.innerHTML = historyHTML;
+      }
+
+      function deleteHistoryItem(id) {
+        let history = getHistory();
+        history = history.filter((item) => item.id !== id);
+        localStorage.setItem("englishTranslationHistory", JSON.stringify(history));
+        renderHistory();
+      }
+
+      function useHistoryItem(englishText) {
+        document.getElementById("englishInput").value = englishText;
+        updateCharCount();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        convertText(englishText);
+        closeHistoryModal();
+      }
+
+      function getTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+
+        if (diffInSeconds < 60) return "Just now";
+        if (diffInSeconds < 3600)
+          return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400)
+          return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        if (diffInSeconds < 2592000)
+          return `${Math.floor(diffInSeconds / 86400)}d ago`;
+
+        return date.toLocaleDateString();
+      }
+
+      // Close modal when clicking outside
+      document.addEventListener("click", function (event) {
+        const modal = document.getElementById("historyModal");
+        if (event.target === modal) {
+          closeHistoryModal();
+        }
+      });
+
+      // Close modal with Escape key
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeHistoryModal();
+        }
+      });
+
+      function updateCharCount() {
+        const input = document.getElementById("englishInput");
+        const charCounter = document.getElementById("charCounter");
+        const len = input.value.length;
+        if (charCounter) charCounter.textContent = `${len} / 100`;
+      }
+
+      function handleInput() {
+        updateCharCount();
+
+        const input = document.getElementById("englishInput").value.trim();
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+
+        // Clear any existing timer
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        if (!input) {
+          output.textContent = "ტრანსლიტერაცია გამოჩნდება აქ...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          return;
+        }
+
+        // Show "typing..." immediately for visual feedback
+        if (!isTranslating) {
+          output.textContent = "Typing...";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+        }
+
+        // Set a new timer to translate after user stops typing
+        debounceTimer = setTimeout(() => {
+          if (!isTranslating) {
+            convertText(input);
+          }
+        }, 800);
+      }
+
+      function selectVariant(word) {
+        const input = document.getElementById("englishInput");
+        input.value = word;
+        updateCharCount();
+        if (debounceTimer) clearTimeout(debounceTimer);
+        convertText(word);
+      }
+
+      function convertText(text) {
+        if (isTranslating) return;
+
+        isTranslating = true;
+        const output = document.getElementById("georgianOutput");
+
+        output.textContent = "Translating...";
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-400 overflow-y-auto";
+
+        const payload = {
+          word: text,
+        };
+
+        fetch("/convert-english", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then((data) => {
+            displayResult(data);
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            const output = document.getElementById("georgianOutput");
+            output.textContent = "Translation error. Please try again.";
+            output.className =
+              "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          })
+          .finally(() => {
+            isTranslating = false;
+          });
+      }
+
+      function displayResult(data) {
+        const output = document.getElementById("georgianOutput");
+        const copyBtn = document.getElementById("copyBtn");
+        const shareBtn = document.getElementById("shareBtn");
+        const input = document.getElementById("englishInput");
+
+        if (data.error) {
+          output.textContent = data.error;
+          output.className =
+            "w-full h-64 p-4 text-lg text-red-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          return;
+        }
+
+        if (!data.success || !data.results || data.results.length === 0) {
+          output.textContent = "No translation available.";
+          output.className =
+            "w-full h-64 p-4 text-lg text-gray-500 overflow-y-auto";
+          copyBtn.disabled = true;
+          shareBtn.disabled = true;
+          copyBtn.classList.add("opacity-50");
+          shareBtn.classList.add("opacity-50");
+          return;
+        }
+
+        // Build HTML for main results
+        let html = "";
+        
+        if (data.results && data.results.length > 0) {
+          data.results.forEach((result, index) => {
+            const confidencePercent = Math.round(result.confidence * 100);
+            const confidenceColor = 
+              result.confidence >= 0.9 ? "text-green-600" :
+              result.confidence >= 0.7 ? "text-yellow-600" :
+              "text-orange-600";
+            
+            html += `
+              <div class="mb-6 ${index > 0 ? 'border-t border-gray-200 pt-4' : ''}">
+                <div class="flex items-start justify-between mb-2">
+                  <div>
+                    <span class="text-xs text-gray-500 uppercase tracking-wide">${result.word}</span>
+                    <div class="text-lg font-medium text-gray-900 mt-1">${result.georgian || 'N/A'}</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="text-xs ${confidenceColor} font-semibold">${confidencePercent}%</div>
+                    <div class="text-xs text-gray-500">${result.method || 'N/A'}</div>
+                  </div>
+                </div>
+                
+                ${result.ipa ? `
+                  <div class="mt-2 text-sm text-gray-600">
+                    <span class="text-xs text-gray-500">IPA:</span>
+                    <span class="font-mono ml-1">/${result.ipa}/</span>
+                  </div>
+                ` : ''}
+                
+                ${result.variants && result.variants.length > 0 ? `
+                  <div class="mt-2">
+                    <div class="text-xs text-gray-500 mb-1">ვარიანტები:</div>
+                    <div class="text-sm text-gray-700 space-y-1">
+                      ${result.variants.map(v => `<div>• ${v}</div>`).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+              </div>
+            `;
+          });
+        }
+        
+        // Add variants section if there are any
+        if (data.variants && data.variants.length > 0) {
+          html += `
+            <div class="mt-4 pt-4 border-t border-gray-200">
+              <div class="text-xs text-gray-500 mb-2">სხვა ვარიანტები:</div>
+              <div class="flex flex-wrap gap-2">
+                ${data.variants.map(variant => `
+                  <button 
+                    onclick="selectVariant('${variant.word.replace(/'/g, "\\'")}')"
+                    class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 border border-gray-300 rounded-lg transition-colors text-gray-700 hover:text-gray-900"
+                  >
+                    ${variant.word}
+                  </button>
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        output.innerHTML = html;
+        output.className =
+          "w-full h-64 p-4 text-lg text-gray-900 overflow-y-auto";
+
+        copyBtn.disabled = false;
+        shareBtn.disabled = false;
+        copyBtn.classList.remove("opacity-50");
+        shareBtn.classList.remove("opacity-50");
+
+        // Save to history
+        const englishText = input.value.trim();
+        if (englishText && data.results) {
+          saveToHistory(englishText, data.results);
+        }
+      }
+
+      // Copy functionality
+      document
+        .getElementById("copyBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          if (
+            output.textContent &&
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ")
+          ) {
+            try {
+              // Copy Georgian text directly
+              const textToCopy = output.textContent.trim();
+
+              // Try modern clipboard API first
+              if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(textToCopy);
+              } else {
+                // Fallback for older browsers or non-HTTPS
+                const textArea = document.createElement("textarea");
+                textArea.value = textToCopy;
+                textArea.style.position = "fixed";
+                textArea.style.left = "-999999px";
+                textArea.style.top = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                document.execCommand("copy");
+                textArea.remove();
+              }
+
+              // Show success feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-green-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Copy failed:", error);
+
+              // Show error feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+
+      // Share functionality
+      document
+        .getElementById("shareBtn")
+        .addEventListener("click", async function () {
+          const output = document.getElementById("georgianOutput");
+          const input = document.getElementById("englishInput");
+
+          if (
+            output.textContent &&
+            !output.textContent.includes("ტრანსლიტერაცია გამოჩნდება აქ...")
+          ) {
+            // Get Georgian text directly
+            const georgianText = output.textContent.trim();
+
+            let shareText = `English: ${input.value}`;
+            shareText += `\nGeorgian: ${georgianText}`;
+
+            const shareData = {
+              title: "English to Georgian Translation",
+              text: shareText,
+              url: window.location.href,
+            };
+
+            try {
+              // Try native Web Share API first (mobile)
+              if (
+                navigator.share &&
+                navigator.canShare &&
+                navigator.canShare(shareData)
+              ) {
+                await navigator.share(shareData);
+                console.log("Shared successfully");
+              } else {
+                // Fallback: copy to clipboard with share format
+                const fullShareText = `${shareText}\n\nTranslated at: ${window.location.href}`;
+
+                if (navigator.clipboard && window.isSecureContext) {
+                  await navigator.clipboard.writeText(fullShareText);
+                } else {
+                  // Fallback for older browsers
+                  const textArea = document.createElement("textarea");
+                  textArea.value = fullShareText;
+                  textArea.style.position = "fixed";
+                  textArea.style.left = "-999999px";
+                  textArea.style.top = "-999999px";
+                  document.body.appendChild(textArea);
+                  textArea.focus();
+                  textArea.select();
+                  document.execCommand("copy");
+                  textArea.remove();
+                }
+
+                // Show feedback that it was copied
+                alert("Translation copied to clipboard for sharing!");
+              }
+
+              // Visual feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-check text-blue-custom text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            } catch (error) {
+              console.error("Share failed:", error);
+
+              // Show error feedback
+              const originalText = this.innerHTML;
+              this.innerHTML =
+                '<i class="fas fa-times text-red-500 text-lg"></i>';
+              setTimeout(() => {
+                this.innerHTML = originalText;
+              }, 1500);
+            }
+          }
+        });
+    </script>
+  </body>
+</html>
