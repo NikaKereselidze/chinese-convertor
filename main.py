@@ -6,6 +6,11 @@ from pypinyin_dict.pinyin_data import ktghz2013
 from flask_cors import CORS
 import unicodedata
 import os
+import requests
+import urllib3
+
+# Disable SSL warnings for requests with verify=False
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # Load the pinyin data
 ktghz2013.load()
@@ -581,6 +586,98 @@ def index_new_georgian():
 @app.route('/latin')
 def latin_transliterator():
     return render_template('index-latin.html')
+
+
+@app.route('/english')
+def english_transliterator():
+    return render_template('index-english.html')
+
+
+@app.route('/convert-english', methods=['POST', 'OPTIONS'])
+def convert_english_endpoint():
+    if request.method == 'OPTIONS':
+        return '', 200
+    try:
+        if not request.is_json:
+            return jsonify({"error": "Request must be JSON"}), 400
+        data = request.get_json()
+        if data is None:
+            return jsonify({"error": "Invalid JSON data"}), 400
+        
+        word = data.get('word', '').strip()
+        if not word:
+            return jsonify({"error": "Word is required"}), 400
+        
+        # Step 1: Get suggestions
+        suggestions_url = "https://goods4good.net/convertor2/api.php"
+        suggestions_params = {"action": "suggestions", "q": word}
+        
+        try:
+            suggestions_response = requests.get(suggestions_url, params=suggestions_params, timeout=10, verify=False)
+            suggestions_response.raise_for_status()
+            suggestions_data = suggestions_response.json()
+        except Exception as e:
+            return jsonify({"error": f"Failed to fetch suggestions: {str(e)}"}), 500
+        
+        if not suggestions_data.get('success') or not suggestions_data.get('data', {}).get('suggestions'):
+            return jsonify({"error": "No suggestions found"}), 404
+        
+        suggestions = suggestions_data['data']['suggestions']
+        
+        # Step 2: Transliterate each suggestion
+        transliterate_url = "https://goods4good.net/convertor2/api.php?action=transliterate"
+        results = []
+        
+        for suggestion in suggestions:
+            word_to_transliterate = suggestion.get('word', '')
+            if not word_to_transliterate:
+                continue
+            
+            try:
+                transliterate_response = requests.post(
+                    transliterate_url,
+                    json={"word": word_to_transliterate},
+                    timeout=10,
+                    verify=False
+                )
+                transliterate_response.raise_for_status()
+                transliterate_data = transliterate_response.json()
+                
+                if transliterate_data.get('success') and transliterate_data.get('data'):
+                    result_data = transliterate_data['data']
+                    results.append({
+                        "word": word_to_transliterate,
+                        "georgian": result_data.get('result', ''),
+                        "ipa": result_data.get('ipa', ''),
+                        "cleanIpa": result_data.get('cleanIpa', ''),
+                        "confidence": result_data.get('confidence', 0),
+                        "method": result_data.get('method', ''),
+                        "variants": result_data.get('variants', []),
+                        "relevance": suggestion.get('relevance', 0),
+                        "source": suggestion.get('source', '')
+                    })
+            except Exception as e:
+                # Continue with other suggestions even if one fails
+                app.logger.error(f"Failed to transliterate {word_to_transliterate}: {str(e)}")
+                continue
+        
+        if not results:
+            return jsonify({"error": "No transliterations found"}), 404
+        
+        # Separate results by relevance: >= 100 are main results, < 100 are variants
+        main_results = [r for r in results if r.get('relevance', 0) >= 100]
+        variants = [r for r in results if r.get('relevance', 0) < 100]
+        
+        return jsonify({
+            "success": True,
+            "query": word,
+            "results": main_results,
+            "variants": variants
+        })
+        
+    except Exception as e:
+        app.logger.error(f"Error in convert_english_endpoint: {str(e)}")
+        return jsonify({"error": str(e)}), 500
 
 
 @app.route('/convert', methods=['POST', 'OPTIONS'])
