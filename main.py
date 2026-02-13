@@ -647,7 +647,7 @@ def convert_english_endpoint():
                     result_data = transliterate_data['data']
                     results.append({
                         "word": word_to_transliterate,
-                        "georgian": result_data.get('result', ''),
+                        "georgian": result_data.get('transliteration', ''),
                         "ipa": result_data.get('ipa', ''),
                         "cleanIpa": result_data.get('cleanIpa', ''),
                         "confidence": result_data.get('confidence', 0),
