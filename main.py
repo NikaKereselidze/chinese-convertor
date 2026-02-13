@@ -665,8 +665,8 @@ def convert_english_endpoint():
             return jsonify({"error": "No transliterations found"}), 404
         
         # Separate results by relevance: >= 100 are main results, < 100 are variants
-        main_results = [r for r in results if r.get('relevance', 0) >= 100]
-        variants = [r for r in results if r.get('relevance', 0) < 100]
+        main_results = [r for r in results if r.get('relevance', 0) >= 200]
+        variants = [r for r in results if r.get('relevance', 0) < 200]
         
         return jsonify({
             "success": True,
