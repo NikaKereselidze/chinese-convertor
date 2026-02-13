@@ -609,7 +609,7 @@ def convert_english_endpoint():
             return jsonify({"error": "Word is required"}), 400
         
         # Step 1: Get suggestions
-        suggestions_url = "https://goods4good.net/convertor2/api.php"
+        suggestions_url = "https://goods4good.net/convertor4/api.php"
         suggestions_params = {"action": "suggestions", "q": word}
         
         try:
@@ -625,7 +625,7 @@ def convert_english_endpoint():
         suggestions = suggestions_data['data']['suggestions']
         
         # Step 2: Transliterate each suggestion
-        transliterate_url = "https://goods4good.net/convertor2/api.php?action=transliterate"
+        transliterate_url = "https://goods4good.net/convertor4/api.php?action=transliterate"
         results = []
         
         for suggestion in suggestions:
